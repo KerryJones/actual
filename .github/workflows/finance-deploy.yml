@@ -1,7 +1,7 @@
 name: Build and deploy finance image
 on:
   push:
-    branches: [kerry/main]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
