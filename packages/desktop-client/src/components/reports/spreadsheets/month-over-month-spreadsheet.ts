@@ -75,7 +75,10 @@ export function createMonthOverMonthSpreadsheet({
 
     const keyOf = (r: CategoryAmountRow) => r.category ?? '__uncategorized__';
 
-    const byKey = new Map<string, { currentTotal: number; previousTotal: number }>();
+    const byKey = new Map<
+      string,
+      { currentTotal: number; previousTotal: number }
+    >();
     for (const row of current) {
       const k = keyOf(row);
       const entry = byKey.get(k) ?? { currentTotal: 0, previousTotal: 0 };
@@ -92,9 +95,7 @@ export function createMonthOverMonthSpreadsheet({
     // Sort by absolute current-window size descending (biggest spend first).
     const rows: CategoryWindowComparison[] = [...byKey.entries()]
       .map(([category, totals]) => ({ category, ...totals }))
-      .sort(
-        (a, b) => Math.abs(b.currentTotal) - Math.abs(a.currentTotal),
-      );
+      .sort((a, b) => Math.abs(b.currentTotal) - Math.abs(a.currentTotal));
 
     setData({
       rows,

@@ -13,7 +13,6 @@ import { getScheduledAmount } from '@actual-app/core/shared/schedules';
 import type { ScheduleEntity } from '@actual-app/core/types/models';
 
 import { PrivacyFilter } from '#components/PrivacyFilter';
-import { LoadingIndicator } from '#components/reports/LoadingIndicator';
 import { ReportCard } from '#components/reports/ReportCard';
 import { ReportCardName } from '#components/reports/ReportCardName';
 import { SummaryNumber } from '#components/reports/SummaryNumber';
@@ -129,7 +128,9 @@ export function SubscriptionsCard({
                   {row.label}
                 </span>
                 <span style={{ color: theme.pageTextLight, fontWeight: 500 }}>
-                  <PrivacyFilter>{format(row.monthly, 'financial')}</PrivacyFilter>
+                  <PrivacyFilter>
+                    {format(row.monthly, 'financial')}
+                  </PrivacyFilter>
                 </span>
               </View>
             ))}

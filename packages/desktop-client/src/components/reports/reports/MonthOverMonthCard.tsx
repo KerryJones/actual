@@ -5,10 +5,8 @@ import { useTranslation } from 'react-i18next';
 
 import * as monthUtils from '@actual-app/core/shared/months';
 
-import {
-  CategoryComparisonCard,
-  type CategoryComparisonMeta,
-} from './CategoryComparisonCard';
+import { CategoryComparisonCard } from './CategoryComparisonCard';
+import type { CategoryComparisonMeta } from './CategoryComparisonCard';
 
 type MonthOverMonthCardProps = {
   isEditing?: boolean;

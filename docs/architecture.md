@@ -41,6 +41,7 @@ finance.kerryjones.net  (port 5006, SSL via Let's Encrypt)
 Keep this list current as work proceeds. Files outside this list should not be modified without strong reason.
 
 ### Fork-only files (zero upstream conflict surface)
+
 - `Dockerfile.finance` — 2-line custom image (`FROM actualbudget/actual-server:latest` + `COPY` of built browser bundle). **Do not rename** — would conflict with future upstream renames.
 - `.github/workflows/finance-deploy.yml` — fork-only CI pipeline.
 - `Makefile` — wraps the `sync-upstream` workflow.
@@ -55,6 +56,7 @@ Keep this list current as work proceeds. Files outside this list should not be m
 - `docs/architecture.md`, `docs/design.md`, `docs/rebase-strategy.md` — this fork's documentation.
 
 ### Modified upstream files (will conflict during rebases)
+
 - `CLAUDE.md` — fork-only behavioral rules + `@AGENTS.md` include.
 - `packages/desktop-client/src/style/themes/light.ts` — token overrides, marked with `// FINANCE FORK:` header.
 - `packages/desktop-client/src/style/themes/dark.ts` — same.
@@ -66,6 +68,7 @@ Keep this list current as work proceeds. Files outside this list should not be m
 - `packages/loot-core/src/server/dashboard/app.ts` — extends the `isWidgetType` runtime allowlist so the persistence layer accepts the new widget types.
 
 ### What is NOT customized (and should not be without strong reason)
+
 - Everything else, especially:
   - `packages/loot-core/` — core data logic, sync layer, query engine. We inherit this verbatim, with two narrow exceptions: the widget-type union (`types/models/dashboard.ts`) and the widget-type allowlist (`server/dashboard/app.ts`) both grew three entries so our custom dashboard cards can persist. Touch nothing else in loot-core without strong reason.
   - `packages/sync-server/` — server bits. We inherit them via the `FROM actualbudget/actual-server:latest` line in `Dockerfile.finance` and never fork the package itself.

@@ -1,7 +1,7 @@
 // FINANCE FORK: per-category two-window comparison list. Shared between
 // MonthOverMonthCard and YTDCategoryCard.
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 
 import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
@@ -35,12 +35,14 @@ export function CategoryComparisonList({
   const nameFor = (id: string) =>
     id === '__uncategorized__'
       ? t('Uncategorized')
-      : categoryMaps.list[id]?.name ?? t('Unknown category');
+      : (categoryMaps.list[id]?.name ?? t('Unknown category'));
 
   if (rows.length === 0) {
     return (
-      <View style={{ marginTop: 8, color: theme.pageTextSubdued, fontSize: 13 }}>
-        {t('No expenses in either window.')}
+      <View
+        style={{ marginTop: 8, color: theme.pageTextSubdued, fontSize: 13 }}
+      >
+        <Trans>No expenses in either window.</Trans>
       </View>
     );
   }

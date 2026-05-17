@@ -40,7 +40,9 @@
  * ----------------------------------------------------------------------- */
 :root {
   /* Enable Inter's tabular-numbers feature globally so amount columns align. */
-  font-feature-settings: 'tnum' 1, 'cv11' 1;
+  font-feature-settings:
+    'tnum' 1,
+    'cv11' 1;
 }
 
 /* Tighten line-height on tabular content so rows scan faster. */

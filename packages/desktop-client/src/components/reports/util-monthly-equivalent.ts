@@ -17,7 +17,10 @@ import type { RecurConfig } from '@actual-app/core/types/models';
  *  - monthly → amount / interval
  *  - yearly  → amount / (12 * interval)
  */
-export function getMonthlyEquivalent(amount: number, recur: RecurConfig): number {
+export function getMonthlyEquivalent(
+  amount: number,
+  recur: RecurConfig,
+): number {
   const interval = recur.interval && recur.interval > 0 ? recur.interval : 1;
   const magnitude = Math.abs(amount);
 

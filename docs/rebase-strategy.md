@@ -21,30 +21,37 @@ After it finishes, the deploy CI starts on the new `main`. Watch it at: https://
 These files are modified by both us and upstream. Expect mechanical conflicts:
 
 ### `packages/desktop-client/src/style/themes/light.ts` and `dark.ts`
+
 - **Why**: upstream adds, renames, or removes color tokens.
 - **Resolution**: keep our overridden values for tokens we explicitly customize (look for the `// FINANCE FORK:` header at the top of each file). Accept upstream's additions of any new tokens. If a token we override gets renamed upstream, rename it in our overrides too.
 
 ### `packages/desktop-client/src/index.tsx`
+
 - **Why**: our one-line `import './style/finance-layout.css'` could collide if upstream restructures the entry point.
 - **Resolution**: keep the import; place it near the other style imports.
 
 ### `packages/desktop-client/src/components/FinancesApp.tsx`
+
 - **Why**: our `<div className="finance-content-wrapper">` wraps the post-sidebar content area. Upstream JSX changes around the sidebar/main split can collide.
 - **Resolution**: re-apply the wrapper around the same logical content area. If the structure has changed substantially, re-read `docs/design.md` for intent, then re-apply.
 
 ### `packages/desktop-client/src/components/reports/getDashboardWidgetItems.ts`
+
 - **Why**: both we and upstream add to the widget items list.
 - **Resolution**: keep both upstream's new entries and ours. The list is order-insensitive — append our entries at the end.
 
 ### `packages/desktop-client/src/components/reports/Overview.tsx`
+
 - **Why**: both we and upstream add cases to the widget-type dispatch AND to the inline add-widget menu items array.
 - **Resolution**: keep both branches and both menu items. Our cases (`'month-over-month-card'`, `'ytd-category-card'`, `'subscriptions-card'`) follow the pattern of existing ones — re-apply after upstream's new dispatch arms land. The `MonthOverMonthCard` / `YTDCategoryCard` / `SubscriptionsCard` import lines must also survive — they are marked with `// FINANCE FORK:`.
 
 ### `packages/loot-core/src/types/models/dashboard.ts`
+
 - **Why**: we added `MonthOverMonthWidget`, `YTDCategoryWidget`, `SubscriptionsWidget` to the `SpecializedWidget` union. Upstream changes to that union (adding more widget types) will collide.
 - **Resolution**: keep all of upstream's additions and all of ours. The union order does not matter functionally.
 
 ### `packages/loot-core/src/server/dashboard/app.ts`
+
 - **Why**: we extended the `isWidgetType` allowlist so our custom widgets persist. Upstream may add entries to the same allowlist.
 - **Resolution**: keep both upstream's and our entries. The three fork entries are marked with a `// FINANCE FORK:` comment above them.
 
