@@ -32,8 +32,9 @@ These files are modified by both us and upstream. Expect mechanical conflicts:
 
 ### `packages/desktop-client/src/components/FinancesApp.tsx`
 
-- **Why**: our `<div className="finance-content-wrapper">` wraps the post-sidebar content area. Upstream JSX changes around the sidebar/main split can collide.
-- **Resolution**: re-apply the wrapper around the same logical content area. If the structure has changed substantially, re-read `docs/design.md` for intent, then re-apply.
+- **Why**: our `<div className="finance-content-wrapper">` wraps the post-sidebar content area, and `oxfmt` reindented every child of `<Routes>` to match the new wrapper depth. **Every inner Route line now differs from upstream by whitespace alone**, so the conflict surface on this file is much larger than the logical change (one wrapper div) would suggest. Upstream JSX changes around the sidebar/main split can also collide.
+- **Resolution**: on whitespace-only conflicts inside the `<Routes>` block, always keep our deeper-indented version — `oxfmt` will reformat any structural changes upstream introduces. For real JSX-structure conflicts, re-apply the wrapper around the same logical content area; if the structure has changed substantially, re-read `docs/design.md` for intent, then re-apply.
+- **Tip**: `git rebase -X ignore-all-space upstream/master` may resolve the whitespace-only conflicts automatically; verify with `yarn typecheck` afterward.
 
 ### `packages/desktop-client/src/components/reports/getDashboardWidgetItems.ts`
 

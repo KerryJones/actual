@@ -8,7 +8,7 @@ This is Kerry's personal fork of [Actual Budget](https://github.com/actualbudget
 
 - **Rebase-safety is #1.** This fork rebases on `upstream/master` regularly. Confine modifications to designated files (see `docs/architecture.md`). Modifying random upstream files creates compounding rebase pain.
 - **Never bypass `make sync-upstream`.** The dirty-tree guard exists for a reason.
-- **Update docs after changes.** Touch the deploy pipeline → update `docs/architecture.md`. Touch the design system → update `docs/design.md`. Change the rebase workflow → update `docs/rebase-strategy.md`.
+- **Always keep `docs/` current. Non-negotiable.** Every change ships with its doc update in the SAME commit — never as a follow-up, never deferred, never gated on user approval. Touch the deploy pipeline → update `docs/architecture.md`. Touch the design system → update `docs/design.md`. Change the rebase workflow, add a new conflict-prone file, or learn a new resolution recipe → update `docs/rebase-strategy.md`. Add or remove a customized file → update the file maps in both `docs/architecture.md` and `docs/rebase-strategy.md`. If you find yourself thinking "I should mention this to the user before updating the doc" — stop, update the doc, then mention it.
 
 ### Coding principles
 
