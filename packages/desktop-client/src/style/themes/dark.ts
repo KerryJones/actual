@@ -1,45 +1,49 @@
+// FINANCE FORK: Mercury-inspired dark theme overrides.
+// Only token values are customized; export names are preserved verbatim so
+// upstream rebases stay mechanical (resolve conflicts by keeping our values).
+// See docs/design.md for design intent and docs/rebase-strategy.md for resolution.
 import * as colorPalette from '#style/palette';
 
-export const pageBackground = colorPalette.gray900;
-export const pageBackgroundModalActive = colorPalette.gray800;
-export const pageBackgroundTopLeft = colorPalette.navy800;
-export const pageBackgroundBottomRight = colorPalette.gray700;
-export const pageBackgroundLineTop = colorPalette.purple400;
-export const pageBackgroundLineMid = colorPalette.navy900;
-export const pageBackgroundLineBottom = colorPalette.navy150;
-export const pageText = colorPalette.navy150;
-export const pageTextLight = colorPalette.navy300;
-export const pageTextSubdued = colorPalette.navy500;
-export const pageTextDark = colorPalette.navy100;
+export const pageBackground = '#0f1115'; // FINANCE FORK (graphite, not black)
+export const pageBackgroundModalActive = '#181b21'; // FINANCE FORK
+export const pageBackgroundTopLeft = '#0f1115'; // FINANCE FORK
+export const pageBackgroundBottomRight = '#0f1115'; // FINANCE FORK
+export const pageBackgroundLineTop = '#586cb1'; // FINANCE FORK (accent)
+export const pageBackgroundLineMid = '#0f1115'; // FINANCE FORK
+export const pageBackgroundLineBottom = '#181b21'; // FINANCE FORK
+export const pageText = '#e7e9ee'; // FINANCE FORK
+export const pageTextLight = '#9ca3af'; // FINANCE FORK
+export const pageTextSubdued = '#6b7280'; // FINANCE FORK
+export const pageTextDark = '#f3f4f6'; // FINANCE FORK
 export const pageTextPositive = colorPalette.purple200;
 export const pageTextLink = colorPalette.purple400;
 export const pageTextLinkLight = colorPalette.purple200;
 
-export const cardBackground = colorPalette.gray800;
-export const cardBorder = colorPalette.purple400;
-export const cardShadow = colorPalette.navy700;
+export const cardBackground = '#181b21'; // FINANCE FORK
+export const cardBorder = '#1f242c'; // FINANCE FORK (near-background)
+export const cardShadow = 'rgba(0, 0, 0, 0.3)'; // FINANCE FORK
 
-export const tableBackground = colorPalette.navy800;
-export const tableRowBackgroundHover = colorPalette.navy700;
-export const tableText = colorPalette.navy150;
-export const tableTextLight = tableText;
-export const tableTextSubdued = colorPalette.navy500;
-export const tableTextSelected = colorPalette.navy150;
-export const tableTextHover = colorPalette.navy400;
-export const tableTextInactive = colorPalette.navy500;
-export const tableHeaderText = colorPalette.navy300;
-export const tableHeaderBackground = colorPalette.navy700;
-export const tableBorder = colorPalette.navy600;
-export const tableBorderSelected = colorPalette.purple400;
-export const tableBorderHover = colorPalette.purple300;
-export const tableBorderSeparator = colorPalette.navy400;
-export const tableRowBackgroundHighlight = colorPalette.purple800;
-export const tableRowBackgroundHighlightText = colorPalette.navy150;
-export const tableRowHeaderBackground = colorPalette.navy700;
-export const tableRowHeaderText = colorPalette.navy150;
+export const tableBackground = '#181b21'; // FINANCE FORK
+export const tableRowBackgroundHover = '#1f242c'; // FINANCE FORK (bg shift, not border)
+export const tableText = '#e7e9ee'; // FINANCE FORK
+export const tableTextLight = '#9ca3af'; // FINANCE FORK
+export const tableTextSubdued = '#6b7280'; // FINANCE FORK
+export const tableTextSelected = '#f3f4f6'; // FINANCE FORK
+export const tableTextHover = '#f3f4f6'; // FINANCE FORK
+export const tableTextInactive = '#6b7280'; // FINANCE FORK
+export const tableHeaderText = '#9ca3af'; // FINANCE FORK
+export const tableHeaderBackground = '#0f1115'; // FINANCE FORK
+export const tableBorder = '#1f242c'; // FINANCE FORK (near-background)
+export const tableBorderSelected = '#7785c8'; // FINANCE FORK (accent in dark)
+export const tableBorderHover = '#262b34'; // FINANCE FORK (near-background)
+export const tableBorderSeparator = '#262b34'; // FINANCE FORK (near-background)
+export const tableRowBackgroundHighlight = '#1e2336'; // FINANCE FORK (accent tint)
+export const tableRowBackgroundHighlightText = '#f3f4f6'; // FINANCE FORK
+export const tableRowHeaderBackground = '#0f1115'; // FINANCE FORK
+export const tableRowHeaderText = '#f3f4f6'; // FINANCE FORK
 
-export const numberPositive = colorPalette.green300;
-export const numberNegative = colorPalette.red200;
+export const numberPositive = '#4ade80'; // FINANCE FORK
+export const numberNegative = '#f87171'; // FINANCE FORK
 export const numberNeutral = colorPalette.navy500;
 export const budgetNumberNegative = numberNegative;
 export const budgetNumberZero = tableTextSubdued;
@@ -51,15 +55,15 @@ export const toBudgetPositive = numberPositive;
 export const toBudgetZero = numberPositive;
 export const toBudgetNegative = budgetNumberNegative;
 
-export const sidebarBackground = colorPalette.navy900;
+export const sidebarBackground = '#0c0e12'; // FINANCE FORK (slightly darker than canvas)
 export const sidebarItemBackgroundPending = colorPalette.orange200;
 export const sidebarItemBackgroundPositive = colorPalette.green500;
 export const sidebarItemBackgroundFailed = colorPalette.red300;
-export const sidebarItemAccentSelected = colorPalette.purple200;
-export const sidebarItemBackgroundHover = colorPalette.navy700;
-export const sidebarItemText = colorPalette.navy150;
-export const sidebarItemTextSelected = colorPalette.purple200;
-export const sidebarBudgetName = colorPalette.navy300;
+export const sidebarItemAccentSelected = '#7785c8'; // FINANCE FORK (accent)
+export const sidebarItemBackgroundHover = '#171a21'; // FINANCE FORK
+export const sidebarItemText = '#9ca3af'; // FINANCE FORK
+export const sidebarItemTextSelected = '#f3f4f6'; // FINANCE FORK
+export const sidebarBudgetName = '#9ca3af'; // FINANCE FORK
 
 export const menuBackground = colorPalette.navy800;
 export const menuItemBackground = colorPalette.navy800;
@@ -113,8 +117,8 @@ export const buttonMenuSelectedBorder = buttonMenuSelectedBackground;
 
 export const buttonPrimaryText = colorPalette.white;
 export const buttonPrimaryTextHover = buttonPrimaryText;
-export const buttonPrimaryBackground = colorPalette.purple400;
-export const buttonPrimaryBackgroundHover = colorPalette.purple600;
+export const buttonPrimaryBackground = '#7785c8'; // FINANCE FORK (accent in dark)
+export const buttonPrimaryBackgroundHover = '#8d99d5'; // FINANCE FORK
 export const buttonPrimaryBorder = buttonPrimaryBackground;
 export const buttonPrimaryShadow = 'rgba(0, 0, 0, 0.6)';
 export const buttonPrimaryDisabledText = colorPalette.navy700;

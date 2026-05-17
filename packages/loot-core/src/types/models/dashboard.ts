@@ -118,6 +118,23 @@ export type AgeOfMoneyWidget = AbstractWidget<
   } | null
 >;
 
+// FINANCE FORK: three custom dashboard widgets added below
+// (month-over-month, year-to-date, subscriptions). Type names match the
+// dispatch in Overview.tsx and the allowlist in
+// loot-core/src/server/dashboard/app.ts.
+export type MonthOverMonthWidget = AbstractWidget<
+  'month-over-month-card',
+  { name?: string } | null
+>;
+export type YTDCategoryWidget = AbstractWidget<
+  'ytd-category-card',
+  { name?: string } | null
+>;
+export type SubscriptionsWidget = AbstractWidget<
+  'subscriptions-card',
+  { name?: string } | null
+>;
+
 type SpecializedWidget =
   | NetWorthWidget
   | CashFlowWidget
@@ -130,7 +147,10 @@ type SpecializedWidget =
   | FormulaWidget
   | SankeyWidget
   | AgeOfMoneyWidget
-  | BalanceForecastWidget;
+  | BalanceForecastWidget
+  | MonthOverMonthWidget // FINANCE FORK
+  | YTDCategoryWidget // FINANCE FORK
+  | SubscriptionsWidget; // FINANCE FORK
 export type DashboardWidgetEntity = SpecializedWidget | CustomReportWidget;
 export type NewDashboardWidgetEntity = Omit<
   DashboardWidgetEntity,

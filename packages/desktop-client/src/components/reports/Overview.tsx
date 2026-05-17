@@ -66,10 +66,14 @@ import { CustomReportListCards } from './reports/CustomReportListCards';
 import { FormulaCard } from './reports/FormulaCard';
 import { MarkdownCard } from './reports/MarkdownCard';
 import { MissingReportCard } from './reports/MissingReportCard';
+// FINANCE FORK: custom cards
+import { MonthOverMonthCard } from './reports/MonthOverMonthCard';
 import { NetWorthCard } from './reports/NetWorthCard';
 import { SankeyCard } from './reports/SankeyCard';
 import { SpendingCard } from './reports/SpendingCard';
+import { SubscriptionsCard } from './reports/SubscriptionsCard';
 import { SummaryCard } from './reports/SummaryCard';
+import { YTDCategoryCard } from './reports/YTDCategoryCard';
 
 function isCustomReportWidget(
   widget: DashboardWidgetEntity,
@@ -620,6 +624,19 @@ export function Overview({ dashboard }: OverviewProps) {
                               name: 'calendar-card' as const,
                               text: t('Calendar card'),
                             },
+                            // FINANCE FORK: custom widget add-menu entries
+                            {
+                              name: 'month-over-month-card' as const,
+                              text: t('Month over month'),
+                            },
+                            {
+                              name: 'ytd-category-card' as const,
+                              text: t('Year to date'),
+                            },
+                            {
+                              name: 'subscriptions-card' as const,
+                              text: t('Monthly subscriptions'),
+                            },
                             ...(formulaMode
                               ? [
                                   {
@@ -949,6 +966,43 @@ export function Overview({ dashboard }: OverviewProps) {
                           sankeyFeatureFlag ? (
                           <SankeyCard
                             widgetId={item.i}
+                            isEditing={isEditing}
+                            meta={widget.meta}
+                            onMetaChange={newMeta =>
+                              onMetaChange(item, newMeta)
+                            }
+                            onRemove={() => onRemoveWidget(item.i)}
+                            onCopy={targetDashboardId =>
+                              onCopyWidget(item.i, targetDashboardId)
+                            }
+                          />
+                        ) : /* FINANCE FORK: custom widget dispatch */
+                        widget.type === 'month-over-month-card' ? (
+                          <MonthOverMonthCard
+                            isEditing={isEditing}
+                            meta={widget.meta}
+                            onMetaChange={newMeta =>
+                              onMetaChange(item, newMeta)
+                            }
+                            onRemove={() => onRemoveWidget(item.i)}
+                            onCopy={targetDashboardId =>
+                              onCopyWidget(item.i, targetDashboardId)
+                            }
+                          />
+                        ) : widget.type === 'ytd-category-card' ? (
+                          <YTDCategoryCard
+                            isEditing={isEditing}
+                            meta={widget.meta}
+                            onMetaChange={newMeta =>
+                              onMetaChange(item, newMeta)
+                            }
+                            onRemove={() => onRemoveWidget(item.i)}
+                            onCopy={targetDashboardId =>
+                              onCopyWidget(item.i, targetDashboardId)
+                            }
+                          />
+                        ) : widget.type === 'subscriptions-card' ? (
+                          <SubscriptionsCard
                             isEditing={isEditing}
                             meta={widget.meta}
                             onMetaChange={newMeta =>

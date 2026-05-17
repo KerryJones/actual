@@ -1,0 +1,58 @@
+/*
+ * FINANCE FORK: layout + typography overrides not exposed as theme tokens.
+ *
+ * This file is fork-only and has zero conflict surface with upstream.
+ * Token-level color overrides live in style/themes/{light,dark}.ts.
+ *
+ * See docs/design.md for design intent.
+ */
+
+/* ----- Max-width content wrapper ---------------------------------------- *
+ * Applied around <Routes> in FinancesApp.tsx so route content is centered
+ * on wide monitors while the sidebar, Titlebar, and Notifications stay
+ * full-width.
+ *
+ * `flex: 1` + `min-height: 0` lets pages that expect a flex parent (most of
+ * them) still expand vertically inside the scroll container.
+ * ----------------------------------------------------------------------- */
+.finance-content-wrapper {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* On narrow viewports (Actual's responsive cutover ~768px) drop the cap so
+ * mobile layouts use the full width they were designed for. */
+@media (max-width: 768px) {
+  .finance-content-wrapper {
+    max-width: none;
+  }
+}
+
+/* ----- Typography ------------------------------------------------------- *
+ * Inter Variable is already loaded via packages/desktop-client/index.html.
+ * Here we tune weight, tracking, and line-height to feel closer to Mercury
+ * without changing the font itself.
+ * ----------------------------------------------------------------------- */
+:root {
+  /* Enable Inter's tabular-numbers feature globally so amount columns align. */
+  font-feature-settings: 'tnum' 1, 'cv11' 1;
+}
+
+/* Tighten line-height on tabular content so rows scan faster. */
+.finance-content-wrapper table,
+.finance-content-wrapper [role='table'],
+.finance-content-wrapper [role='grid'] {
+  line-height: 1.35;
+}
+
+/* Slight positive tracking on large display numbers for legibility at scale. */
+.finance-content-wrapper h1,
+.finance-content-wrapper h2 {
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}

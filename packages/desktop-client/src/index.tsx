@@ -2,6 +2,7 @@
 // environment (not electron)
 import '#browser-preload';
 import './fonts.scss';
+import './style/finance-layout.css'; // FINANCE FORK
 import './i18n';
 import React from 'react';
 import { createRoot } from 'react-dom/client';

@@ -243,6 +243,8 @@ export function FinancesApp() {
                 <BankSyncStatus />
                 {isNarrowWidth && <MobilePageHeaderSlot />}
 
+                {/* FINANCE FORK: constrain route content to 1440px on wide monitors. */}
+                <div className="finance-content-wrapper">
                 <Routes>
                   <Route
                     path="/"
@@ -394,6 +396,7 @@ export function FinancesApp() {
                     element={<Navigate to="/budget" replace />}
                   />
                 </Routes>
+                </div>
               </View>
 
               <Routes>

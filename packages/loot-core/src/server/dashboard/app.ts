@@ -41,6 +41,10 @@ function isWidgetType(type: string): type is DashboardWidgetEntity['type'] {
     'formula-card',
     'custom-report',
     'sankey-card',
+    // FINANCE FORK: custom widget types (see types/models/dashboard.ts)
+    'month-over-month-card',
+    'ytd-category-card',
+    'subscriptions-card',
   ].includes(type);
 }
 

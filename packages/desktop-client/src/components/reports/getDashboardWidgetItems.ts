@@ -29,6 +29,10 @@ type DashboardWidgetMenuName =
   | 'net-worth-card'
   | 'spending-card'
   | 'summary-card'
+  // FINANCE FORK: custom widget menu names
+  | 'month-over-month-card'
+  | 'ytd-category-card'
+  | 'subscriptions-card'
   | `custom-report-${string}`;
 
 function findItemIndex(
@@ -73,6 +77,19 @@ export function getDashboardWidgetItems({
     {
       name: 'calendar-card',
       text: t('Calendar card'),
+    },
+    // FINANCE FORK: register the three custom widget items.
+    {
+      name: 'month-over-month-card',
+      text: t('Month over month'),
+    },
+    {
+      name: 'ytd-category-card',
+      text: t('Year to date'),
+    },
+    {
+      name: 'subscriptions-card',
+      text: t('Monthly subscriptions'),
     },
     {
       name: 'custom-report',
