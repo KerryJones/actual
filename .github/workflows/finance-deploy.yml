@@ -20,11 +20,49 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/kerryjones/finance-actual
+          # Priorities inverted from defaults (raw=200, sha=100) so that
+          # steps.meta.outputs.version resolves to sha-<short>, which the
+          # finance-compose bump step below relies on.
+          tags: |
+            type=raw,value=latest,priority=100
+            type=sha,priority=200
       - uses: docker/build-push-action@v5
         with:
           context: .
           file: Dockerfile.finance
           push: true
-          tags: ghcr.io/kerryjones/finance-actual:latest
-      - name: Trigger Dokploy redeploy
-        run: curl -fsSL -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
+          tags: ${{ steps.meta.outputs.tags }}
+      - name: Check out finance repo
+        uses: actions/checkout@v4
+        with:
+          repository: KerryJones/finance
+          token: ${{ secrets.FINANCE_REPO_PAT }}
+          path: finance
+      - name: Bump image tag in finance compose
+        env:
+          NEW_IMAGE: ghcr.io/kerryjones/finance-actual:${{ steps.meta.outputs.version }}
+        run: |
+          yq -i '.services.actual-budget.image = strenv(NEW_IMAGE)' finance/docker-compose.yml
+      - name: Commit and push finance repo
+        working-directory: finance
+        env:
+          NEW_TAG: ${{ steps.meta.outputs.version }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          git config user.name "finance-deploy[bot]"
+          git config user.email "finance-deploy@users.noreply.github.com"
+          # Same-SHA reruns produce an identical tag → no diff → no commit
+          # → Dokploy stays put. To force a redeploy, push an empty commit
+          # to the actual fork (git commit --allow-empty).
+          if git diff --quiet -- docker-compose.yml; then
+            echo "No change to docker-compose.yml; skipping commit."
+            exit 0
+          fi
+          git add docker-compose.yml
+          git commit -m "Deploy ghcr.io/kerryjones/finance-actual:${NEW_TAG}" -m "Source: KerryJones/actual@${SOURCE_SHA}"
+          git push origin main

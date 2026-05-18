@@ -61,7 +61,7 @@ These files are modified by both us and upstream. Expect mechanical conflicts:
 These exist only on our side, with filenames upstream doesn't use. If you ever see a conflict here, something is wrong (probably a misnamed upstream addition):
 
 - `Dockerfile.finance`
-- `.github/workflows/finance-deploy.yml`
+- `.github/workflows/finance-deploy.yml` — fork-only CI. Pushes both `:latest` and `:sha-<short>` to GHCR, then commits the new SHA tag into `KerryJones/finance`'s `docker-compose.yml` to force Dokploy to recreate the container. Keep both tags and the cross-repo commit step intact across rebases.
 - `Makefile`
 - `packages/desktop-client/src/style/finance-layout.css`
 - `packages/desktop-client/src/components/reports/reports/MonthOverMonthCard.tsx`

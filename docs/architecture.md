@@ -11,7 +11,9 @@ This is a fork of [`actualbudget/actual`](https://github.com/actualbudget/actual
 
 ## Deploy pipeline
 
-`git push origin main` → GitHub Actions builds → image lands in GHCR → Dokploy webhook fires → VPS pulls and redeploys → live at **finance.kerryjones.net**. End-to-end about 3–5 minutes.
+`git push origin main` → GitHub Actions builds and pushes two image tags (`:latest` and `:sha-<short>`) → CI then commits the new SHA tag into the finance repo's `docker-compose.yml` → Dokploy auto-deploys on that finance-repo push → live at **finance.kerryjones.net**. End-to-end about 3–5 minutes.
+
+The SHA-tag indirection is what makes Dokploy actually recreate the container: `docker compose up -d` only recreates when the service definition changes, not when a moving tag's digest changes. Bumping the image tag in compose forces a real config change every deploy.
 
 ```
 ~/code/actual                          (this fork)
@@ -22,19 +24,21 @@ GitHub Actions: .github/workflows/finance-deploy.yml
     │  - ./.github/actions/setup            (upstream's setup action)
     │  - yarn build:browser --skip-translations
     │  - docker build -f Dockerfile.finance
-    │  - docker push ghcr.io/kerryjones/finance-actual:latest
-    │  - curl -X POST $DOKPLOY_WEBHOOK_URL
+    │  - docker push :latest AND :sha-<short>     (one buildx invocation)
+    │  - actions/checkout KerryJones/finance      (via FINANCE_REPO_PAT)
+    │  - yq rewrite finance/docker-compose.yml image → sha-<short>
+    │  - git commit + push finance repo
     ▼
-Dokploy on Digital Ocean VPS
-    │  - docker pull ghcr.io/kerryjones/finance-actual:latest
-    │  - docker compose up -d            (compose file from ~/code/finance)
+Dokploy on Digital Ocean VPS  (auto-deploy on finance-repo push)
+    │  - git pull KerryJones/finance
+    │  - docker compose up -d            (image tag changed → recreate)
     ▼
 finance.kerryjones.net  (port 5006, SSL via Let's Encrypt)
 ```
 
 ### Companion repo
 
-`~/code/finance/` holds the production `docker-compose.yml` and Dokploy reads from that repo. **Do not put deploy config in this fork.** The split exists so the fork stays focused on Actual customization while infra config lives separately.
+`~/code/finance/` holds the production `docker-compose.yml` and Dokploy reads from that repo. **Do not put deploy config in this fork.** The split exists so the fork stays focused on Actual customization while infra config lives separately. The `image:` tag in that compose file is rewritten by CI on every deploy — never edit the SHA by hand.
 
 ## What is customized
 
@@ -92,3 +96,4 @@ Keep this list current as work proceeds. Files outside this list should not be m
 - Adding a new file to "what's customized": add it to the appropriate list above.
 - Renaming `Dockerfile.finance` or the workflow file: update both this doc and `docs/rebase-strategy.md`.
 - Changing how Dokploy is triggered or how the image is built: update the pipeline diagram.
+- Changing the image-tagging scheme (e.g. dropping `:sha-<short>` or moving to digest pinning): update the pipeline diagram and the companion-repo note about CI rewriting the `image:` tag.
