@@ -85,10 +85,18 @@ These exist only on our side, with filenames upstream doesn't use. If you ever s
 The CI build step we own is:
 
 ```dockerfile
-COPY packages/desktop-client/build/ /usr/src/app/node_modules/@actual-app/web/build/
+COPY packages/desktop-client/build/ /app/node_modules/@actual-app/web/build/
 ```
 
-If upstream ever renames the package (`@actual-app/web` → something else), our COPY target breaks and the image build fails loudly at that step. The fix is to update the target path in `Dockerfile.finance` to match the new location inside `actualbudget/actual-server:latest`. Verify by `docker run --rm -it actualbudget/actual-server:latest ls /usr/src/app/node_modules/@actual-app`.
+**Docker silently creates the COPY destination if it doesn't exist** — so a wrong path produces a successful build that COPYs into a phantom directory the server never reads. This bit us once already: upstream moved its install root from `/usr/src/app/` to `/app/` and our fork shipped fresh bundles into the dead `/usr/src/app/` path for ten days before anyone noticed. Build logs gave no warning.
+
+If upstream renames either the install root (currently `/app/`) or the package (`@actual-app/web` → something else), our COPY target points at nothing. Detect by `curl -sI https://finance.kerryjones.net/` — if `last-modified` is older than the most recent CI build, the COPY landed in the wrong place.
+
+Verify the destination on every upstream sync:
+```sh
+docker run --rm actualbudget/actual-server:latest ls /app/node_modules/@actual-app/web/build/index.html
+```
+If that errors, find the new path with `docker run --rm actualbudget/actual-server:latest find / -name 'index.html' -path '*/build/*'` and update `Dockerfile.finance` accordingly.
 
 ## When to update this doc
 

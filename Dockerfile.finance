@@ -1,2 +1,2 @@
 FROM actualbudget/actual-server:latest
-COPY packages/desktop-client/build/ /usr/src/app/node_modules/@actual-app/web/build/
+COPY packages/desktop-client/build/ /app/node_modules/@actual-app/web/build/
