@@ -45,6 +45,8 @@ function isWidgetType(type: string): type is DashboardWidgetEntity['type'] {
     'month-over-month-card',
     'ytd-category-card',
     'subscriptions-card',
+    'total-income-ytd-card',
+    'total-expenses-ytd-card',
   ].includes(type);
 }
 

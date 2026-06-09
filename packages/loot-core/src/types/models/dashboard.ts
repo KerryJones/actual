@@ -134,6 +134,14 @@ export type SubscriptionsWidget = AbstractWidget<
   'subscriptions-card',
   { name?: string } | null
 >;
+export type TotalIncomeYTDWidget = AbstractWidget<
+  'total-income-ytd-card',
+  { name?: string } | null
+>;
+export type TotalExpensesYTDWidget = AbstractWidget<
+  'total-expenses-ytd-card',
+  { name?: string } | null
+>;
 
 type SpecializedWidget =
   | NetWorthWidget
@@ -150,7 +158,9 @@ type SpecializedWidget =
   | BalanceForecastWidget
   | MonthOverMonthWidget // FINANCE FORK
   | YTDCategoryWidget // FINANCE FORK
-  | SubscriptionsWidget; // FINANCE FORK
+  | SubscriptionsWidget // FINANCE FORK
+  | TotalIncomeYTDWidget // FINANCE FORK
+  | TotalExpensesYTDWidget; // FINANCE FORK
 export type DashboardWidgetEntity = SpecializedWidget | CustomReportWidget;
 export type NewDashboardWidgetEntity = Omit<
   DashboardWidgetEntity,

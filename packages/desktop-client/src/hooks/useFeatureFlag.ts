@@ -14,7 +14,7 @@ const DEFAULT_FEATURE_FLAG_STATE: Record<FeatureFlag, boolean> = {
   budgetAnalysisReport: false,
   payeeLocations: false,
   enableBanking: false,
-  sankeyReport: false,
+  sankeyReport: true, // FINANCE FORK: Sankey is part of the dashboard's 8-graph baseline
 };
 
 export function useFeatureFlag(name: FeatureFlag): boolean {

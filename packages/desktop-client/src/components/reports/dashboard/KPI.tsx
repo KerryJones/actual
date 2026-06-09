@@ -66,12 +66,25 @@ export function KPI({ label, value, hint, delta, sparkline }: KPIProps) {
   );
 }
 
+type CurrencyTone = 'default' | 'negative';
+
 type CurrencyProps = {
   amount: number;
   showSign?: boolean;
+  /** 'negative' renders digits in muted rose for expense KPIs. */
+  tone?: CurrencyTone;
 };
 
-KPI.Currency = function Currency({ amount, showSign = false }: CurrencyProps) {
+const TONE_DIGITS: Record<CurrencyTone, string> = {
+  default: '',
+  negative: 'text-rose-300',
+};
+
+KPI.Currency = function Currency({
+  amount,
+  showSign = false,
+  tone = 'default',
+}: CurrencyProps) {
   const format = useFormat();
   const symbol = format.currency.symbol || '$';
   const sign = amount < 0 ? '−' : showSign && amount > 0 ? '+' : '';
@@ -82,7 +95,7 @@ KPI.Currency = function Currency({ amount, showSign = false }: CurrencyProps) {
         {sign}
         {symbol}
       </span>
-      <span className="text-4xl tabular-nums">
+      <span className={`text-4xl tabular-nums ${TONE_DIGITS[tone]}`}>
         <PrivacyFilter>{digits}</PrivacyFilter>
       </span>
     </span>

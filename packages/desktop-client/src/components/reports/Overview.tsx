@@ -74,6 +74,8 @@ import { SankeyCard } from './reports/SankeyCard';
 import { SpendingCard } from './reports/SpendingCard';
 import { SubscriptionsCard } from './reports/SubscriptionsCard';
 import { SummaryCard } from './reports/SummaryCard';
+import { TotalExpensesYTDCard } from './reports/TotalExpensesYTDCard';
+import { TotalIncomeYTDCard } from './reports/TotalIncomeYTDCard';
 import { YTDCategoryCard } from './reports/YTDCategoryCard';
 
 function isCustomReportWidget(
@@ -627,6 +629,14 @@ export function Overview({ dashboard }: OverviewProps) {
                             },
                             // FINANCE FORK: custom widget add-menu entries
                             {
+                              name: 'total-income-ytd-card' as const,
+                              text: t('Total Income (YTD)'),
+                            },
+                            {
+                              name: 'total-expenses-ytd-card' as const,
+                              text: t('Total Expenses (YTD)'),
+                            },
+                            {
                               name: 'month-over-month-card' as const,
                               text: t('Month over month'),
                             },
@@ -1009,6 +1019,22 @@ export function Overview({ dashboard }: OverviewProps) {
                             onMetaChange={newMeta =>
                               onMetaChange(item, newMeta)
                             }
+                            onRemove={() => onRemoveWidget(item.i)}
+                            onCopy={targetDashboardId =>
+                              onCopyWidget(item.i, targetDashboardId)
+                            }
+                          />
+                        ) : widget.type === 'total-income-ytd-card' ? (
+                          <TotalIncomeYTDCard
+                            isEditing={isEditing}
+                            onRemove={() => onRemoveWidget(item.i)}
+                            onCopy={targetDashboardId =>
+                              onCopyWidget(item.i, targetDashboardId)
+                            }
+                          />
+                        ) : widget.type === 'total-expenses-ytd-card' ? (
+                          <TotalExpensesYTDCard
+                            isEditing={isEditing}
                             onRemove={() => onRemoveWidget(item.i)}
                             onCopy={targetDashboardId =>
                               onCopyWidget(item.i, targetDashboardId)

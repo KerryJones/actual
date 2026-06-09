@@ -55,6 +55,10 @@ Keep this list current as work proceeds. Files outside this list should not be m
 - `packages/desktop-client/src/style/finance-dashboard.css` — Tailwind + Tremor entry (`@tailwind base/components/utilities`) and the `.finance-dashboard-scope` background gradient (Phase 0).
 - `packages/desktop-client/src/components/reports/dashboard/DashboardCard.tsx` — glass-chrome wrapper. Composes upstream `ReportCard` for menu + viewport-defer UX, replaces its visual chrome with the obsidian glass (Phase 0).
 - `packages/desktop-client/src/components/reports/dashboard/KPI.tsx` — KPI primitive (hero number + optional delta pill + optional Tremor `SparkAreaChart`). Workhorse for Phase 1+ rebuilt cards (Phase 0).
+- `packages/desktop-client/src/components/reports/spreadsheets/ytd-flow-spreadsheet.ts` — YTD income/expense sum query shared by the hero KPIs (Phase 1) and the Phase 2 Savings Rate card. On-budget only, uses `category.is_income` filter for consistency with `month-over-month-spreadsheet`.
+- `packages/desktop-client/src/components/reports/reports/YTDFlowCard.tsx` — shared shell for the two YTD hero KPIs. DashboardCard + KPI + KPI.Currency, parameterized by `kind: 'income' | 'expense'` (Phase 1).
+- `packages/desktop-client/src/components/reports/reports/TotalIncomeYTDCard.tsx` — thin wrapper, `kind='income'` (Phase 1).
+- `packages/desktop-client/src/components/reports/reports/TotalExpensesYTDCard.tsx` — thin wrapper, `kind='expense'` (Phase 1). Renders the expense digits in muted rose via `KPI.Currency tone='negative'`.
 - `packages/desktop-client/src/components/reports/reports/MonthOverMonthCard.tsx` — custom dashboard card (Phase 2). Thin wrapper around `CategoryComparisonCard`.
 - `packages/desktop-client/src/components/reports/reports/YTDCategoryCard.tsx` — custom dashboard card (Phase 2). Thin wrapper around `CategoryComparisonCard`.
 - `packages/desktop-client/src/components/reports/reports/SubscriptionsCard.tsx` — custom dashboard card (Phase 2).
@@ -74,6 +78,7 @@ Keep this list current as work proceeds. Files outside this list should not be m
 - `packages/desktop-client/src/components/FinancesApp.tsx` — wraps post-sidebar content in `<div className="finance-content-wrapper">`.
 - `packages/desktop-client/src/components/reports/getDashboardWidgetItems.ts` — extends `DashboardWidgetMenuName` and registers the new widget items.
 - `packages/desktop-client/src/components/reports/Overview.tsx` — imports `finance-dashboard.css` (route-scoped so it only ships on `/reports`), imports the custom card components, adds dispatch branches, extends the add-widget inline menu, and wraps the dashboard scope with `className="finance-dashboard-scope"`.
+- `packages/desktop-client/src/hooks/useFeatureFlag.ts` — flips the `sankeyReport` default to `true` so the Sankey card is addable from the dashboard menu without a per-user settings toggle (Phase 1).
 - `packages/loot-core/src/types/models/dashboard.ts` — adds the fork's widget types to the `SpecializedWidget` union so `widget.type` narrows in `Overview.tsx`.
 - `packages/loot-core/src/server/dashboard/app.ts` — extends the `isWidgetType` runtime allowlist so the persistence layer accepts the fork's widget types.
 

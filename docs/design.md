@@ -151,8 +151,15 @@ One accent (violet) plus one negative (rose), against grayscale. Avoid putting p
 | -------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | `DashboardCard`      | `packages/desktop-client/src/components/reports/dashboard/DashboardCard.tsx`                 | Glass-chrome wrapper. Replaces `ReportCard` chrome for Phase 1+ widgets.            |
 | `KPI`                | `packages/desktop-client/src/components/reports/dashboard/KPI.tsx`                            | Hero-number layout (label + value + delta + sparkline). Powers Savings Rate, FI Progress, Total Income/Expenses, etc. |
-| `KPI.Currency`       | same file                                                                                     | Currency-formatted hero value with the smaller-symbol treatment.                    |
+| `KPI.Currency`       | same file                                                                                     | Currency-formatted hero value with the smaller-symbol treatment. `tone='negative'` switches digits to muted rose for expense KPIs. |
 | `KPI.Percentage`     | same file                                                                                     | Percentage hero value.                                                              |
+
+## Phase 1 cards
+
+- **Total Income (YTD)** — hero KPI. On-budget income transactions, Jan 1 of current year through today. Uses `ytd-flow-spreadsheet`, rendered via `<YTDFlowCard kind='income'>`. Default-tone digits (slate-100).
+- **Total Expenses (YTD)** — same query, `kind='expense'`. Digits in muted rose (`tone='negative'`) per the color-economy rule.
+- **Sankey card** — upstream widget, feature flag default flipped to `true` for this fork. Lives in `SankeyCard.tsx` with its existing Recharts chrome until Phase 3 polishes the visuals.
+- **Calendar card** — upstream widget, already in the add menu. Wrapped in the obsidian scope by virtue of the page bg; Phase 3 reskins the Recharts heatmap to match the violet/indigo palette.
 
 ## Where to make dashboard changes
 
