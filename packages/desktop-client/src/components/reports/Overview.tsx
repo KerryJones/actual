@@ -54,6 +54,7 @@ import {
 import { NON_DRAGGABLE_AREA_CLASS_NAME } from './constants';
 import { DashboardHeader } from './DashboardHeader';
 import './overview.scss';
+import '../../style/finance-dashboard.css'; // FINANCE FORK
 import { DashboardSelector } from './DashboardSelector';
 import { LoadingIndicator } from './LoadingIndicator';
 import { AgeOfMoneyCard } from './reports/AgeOfMoneyCard';
@@ -760,7 +761,7 @@ export function Overview({ dashboard }: OverviewProps) {
       {isImporting ? (
         <LoadingIndicator message={t('Import is running...')} />
       ) : (
-        <div>
+        <div className="finance-dashboard-scope">
           <View
             data-testid="reports-overview"
             innerRef={containerRef}

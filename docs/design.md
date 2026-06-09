@@ -89,3 +89,78 @@ All three consume theme tokens only — never hard-coded colors — so the Phase
 | Layout width, font tracking, etc.  | `packages/desktop-client/src/style/finance-layout.css`   |
 | Where the wrapper class is applied | `packages/desktop-client/src/components/FinancesApp.tsx` |
 | Where the CSS file is imported     | `packages/desktop-client/src/index.tsx`                  |
+
+---
+
+# Dashboard redesign — obsidian + violet (Phase 0+)
+
+The /reports dashboard runs its own visual language, separate from the Mercury-inspired theme above. Mercury covers the rest of the app (budget, accounts, modals, etc.); the dashboard runs an obsidian-glass aesthetic built on Tailwind v3 + Tremor v3, scoped so neither system bleeds into the other.
+
+## Why a separate system
+
+The dashboard's job is rendering large analytical surfaces — charts, KPIs, comparisons. Mercury's neutral palette and inline-style chrome don't give those surfaces the visual weight they need. Tremor's design primitives (Tremor's own `KPI`, `BarList`, `SparkAreaChart`, etc.) ship batteries-included for that purpose, but they require Tailwind. Bolting Tailwind on globally would break Actual's existing inline-style codebase, so the dashboard runs Tailwind under a scope.
+
+## Scope mechanism
+
+- `tailwind.config.cjs` `content` array only includes `src/components/reports/dashboard/**`, `src/components/reports/reports/**`, the dashboard CSS file, and `node_modules/@tremor/**`. Nothing else.
+- `corePlugins.preflight: false` — Tailwind's CSS reset is OFF. Without this, Tailwind's reset would override Actual's typography across the entire app. Tremor components style themselves explicitly so they don't need the reset.
+- `darkMode: 'class'` — dark variants only apply inside an element with class `dark`. The `<DashboardCard>` wrapper sets it on every card; the page scope (`.finance-dashboard-scope` in `finance-dashboard.css`) sets `color-scheme: dark` so form controls render consistently.
+- Tailwind utility names safelisted for slate / violet / indigo / rose colors so Tremor's runtime class generation survives tree-shaking in production builds.
+
+## Palette (locked tokens)
+
+| Role             | Token            | Hex / Tailwind                                                |
+| ---------------- | ---------------- | ------------------------------------------------------------- |
+| Background base  | `bg`             | `slate-950` (#020617)                                         |
+| Card surface     | `surface`        | `slate-900/60` with `backdrop-blur-xl` (glass)                |
+| Card border      | `border`         | `slate-800/50` (hairline)                                     |
+| Primary accent   | `accent`         | `violet-500` (#8b5cf6)                                        |
+| Secondary accent | `accent2`        | `indigo-400` (#818cf8)                                        |
+| Negative         | `negative`       | `rose-400` (#fb7185)                                          |
+| Hero text        | `text-hero`      | `slate-100` (#f1f5f9)                                         |
+| Body text        | `text-body`      | `slate-300` (#cbd5e1)                                         |
+| Muted text       | `text-muted`     | `slate-400` (#94a3b8)                                         |
+| Subdued text     | `text-subdued`   | `slate-500` (#64748b)                                         |
+
+## Card chrome (locked)
+
+The `<DashboardCard>` wrapper composes upstream `ReportCard` (for menu + viewport-defer UX) and renders the glass surface inside it. The chrome is locked at:
+
+```
+rounded-xl border border-slate-800/50 bg-slate-900/60 backdrop-blur-xl p-6 shadow-2xl shadow-slate-950/50
+```
+
+Always `p-6` (24px) padding. Always `rounded-xl` (12px). No internal section borders within a card — separate sections with whitespace or background-color shifts instead.
+
+## Typography
+
+- **Hero number**: 36–40px (Tailwind `text-4xl`) in `text-slate-100`. Use the `<KPI>` primitive — it handles label + value + delta + sparkline layout in one shot.
+- **Currency symbol**: smaller than the digits (`text-2xl` for `$`, `text-4xl` for the digits). `<KPI.Currency amount={1189020} />` renders the split.
+- **Percentage**: `<KPI.Percentage fraction={0.243} />` — digits at `text-4xl`, `%` at `text-2xl`.
+- **Label** (eyebrow above a hero number): `text-xs uppercase tracking-wider text-slate-400`.
+- **Hint** (subline under value): `text-xs text-slate-500`.
+- **Delta pill**: rounded-full pill, `text-xs`, `bg-emerald-500/15 text-emerald-300` for up, `bg-rose-500/15 text-rose-300` for down.
+
+## Color economy
+
+One accent (violet) plus one negative (rose), against grayscale. Avoid putting positive green and negative red on the same card unless the card directly compares them (e.g. Top Movers up/down columns). Tremor chart `colors={["violet", "indigo"]}` is the default for area/bar charts on the dashboard.
+
+## Primitives
+
+| Primitive            | File                                                                                          | Role                                                                                |
+| -------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `DashboardCard`      | `packages/desktop-client/src/components/reports/dashboard/DashboardCard.tsx`                 | Glass-chrome wrapper. Replaces `ReportCard` chrome for Phase 1+ widgets.            |
+| `KPI`                | `packages/desktop-client/src/components/reports/dashboard/KPI.tsx`                            | Hero-number layout (label + value + delta + sparkline). Powers Savings Rate, FI Progress, Total Income/Expenses, etc. |
+| `KPI.Currency`       | same file                                                                                     | Currency-formatted hero value with the smaller-symbol treatment.                    |
+| `KPI.Percentage`     | same file                                                                                     | Percentage hero value.                                                              |
+
+## Where to make dashboard changes
+
+| Change                          | File                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------- |
+| Tailwind palette / safelist     | `packages/desktop-client/tailwind.config.cjs`                                   |
+| PostCSS pipeline                | `packages/desktop-client/postcss.config.cjs`                                   |
+| Dashboard CSS entry / page bg   | `packages/desktop-client/src/style/finance-dashboard.css`                       |
+| Card chrome                     | `packages/desktop-client/src/components/reports/dashboard/DashboardCard.tsx`    |
+| KPI layout                      | `packages/desktop-client/src/components/reports/dashboard/KPI.tsx`              |
+| Where the dashboard scope class is applied | `packages/desktop-client/src/components/reports/Overview.tsx`         |

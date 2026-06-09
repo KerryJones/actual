@@ -49,7 +49,12 @@ Keep this list current as work proceeds. Files outside this list should not be m
 - `Dockerfile.finance` — 2-line custom image (`FROM actualbudget/actual-server:latest` + `COPY` of built browser bundle). **Do not rename** — would conflict with future upstream renames.
 - `.github/workflows/finance-deploy.yml` — fork-only CI pipeline.
 - `Makefile` — wraps the `sync-upstream` workflow.
+- `packages/desktop-client/postcss.config.cjs` — PostCSS pipeline (Tailwind + Autoprefixer) for the dashboard redesign (Phase 0). Picked up by Vite at the project root.
+- `packages/desktop-client/tailwind.config.cjs` — Tailwind config scoped to the dashboard. Preflight is OFF so it does not touch Actual's inline-style codebase. Contains the obsidian + violet palette tokens and Tremor's required color blocks.
 - `packages/desktop-client/src/style/finance-layout.css` — layout + typography overrides not exposed as theme tokens.
+- `packages/desktop-client/src/style/finance-dashboard.css` — Tailwind + Tremor entry (`@tailwind base/components/utilities`) and the `.finance-dashboard-scope` background gradient (Phase 0).
+- `packages/desktop-client/src/components/reports/dashboard/DashboardCard.tsx` — glass-chrome wrapper. Composes upstream `ReportCard` for menu + viewport-defer UX, replaces its visual chrome with the obsidian glass (Phase 0).
+- `packages/desktop-client/src/components/reports/dashboard/KPI.tsx` — KPI primitive (hero number + optional delta pill + optional Tremor `SparkAreaChart`). Workhorse for Phase 1+ rebuilt cards (Phase 0).
 - `packages/desktop-client/src/components/reports/reports/MonthOverMonthCard.tsx` — custom dashboard card (Phase 2). Thin wrapper around `CategoryComparisonCard`.
 - `packages/desktop-client/src/components/reports/reports/YTDCategoryCard.tsx` — custom dashboard card (Phase 2). Thin wrapper around `CategoryComparisonCard`.
 - `packages/desktop-client/src/components/reports/reports/SubscriptionsCard.tsx` — custom dashboard card (Phase 2).
@@ -62,14 +67,15 @@ Keep this list current as work proceeds. Files outside this list should not be m
 ### Modified upstream files (will conflict during rebases)
 
 - `CLAUDE.md` — fork-only behavioral rules + `@AGENTS.md` include.
+- `packages/desktop-client/package.json` — adds Tailwind v3, Tremor, PostCSS, Autoprefixer, Headless UI for the Phase 0 dashboard foundation. Otherwise inherits upstream verbatim.
 - `packages/desktop-client/src/style/themes/light.ts` — token overrides, marked with `// FINANCE FORK:` header.
 - `packages/desktop-client/src/style/themes/dark.ts` — same.
 - `packages/desktop-client/src/index.tsx` — single new import line for `finance-layout.css`.
 - `packages/desktop-client/src/components/FinancesApp.tsx` — wraps post-sidebar content in `<div className="finance-content-wrapper">`.
 - `packages/desktop-client/src/components/reports/getDashboardWidgetItems.ts` — extends `DashboardWidgetMenuName` and registers the new widget items.
-- `packages/desktop-client/src/components/reports/Overview.tsx` — imports the three custom card components, adds dispatch branches, and extends the add-widget inline menu.
-- `packages/loot-core/src/types/models/dashboard.ts` — adds `MonthOverMonthWidget`, `YTDCategoryWidget`, `SubscriptionsWidget` to the `SpecializedWidget` union so `widget.type` narrows in `Overview.tsx`.
-- `packages/loot-core/src/server/dashboard/app.ts` — extends the `isWidgetType` runtime allowlist so the persistence layer accepts the new widget types.
+- `packages/desktop-client/src/components/reports/Overview.tsx` — imports `finance-dashboard.css` (route-scoped so it only ships on `/reports`), imports the custom card components, adds dispatch branches, extends the add-widget inline menu, and wraps the dashboard scope with `className="finance-dashboard-scope"`.
+- `packages/loot-core/src/types/models/dashboard.ts` — adds the fork's widget types to the `SpecializedWidget` union so `widget.type` narrows in `Overview.tsx`.
+- `packages/loot-core/src/server/dashboard/app.ts` — extends the `isWidgetType` runtime allowlist so the persistence layer accepts the fork's widget types.
 
 ### What is NOT customized (and should not be without strong reason)
 
