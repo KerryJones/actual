@@ -49,12 +49,12 @@ Keep this list current as work proceeds. Files outside this list should not be m
 - `Dockerfile.finance` — 2-line custom image (`FROM actualbudget/actual-server:latest` + `COPY` of built browser bundle). **Do not rename** — would conflict with future upstream renames.
 - `.github/workflows/finance-deploy.yml` — fork-only CI pipeline.
 - `Makefile` — wraps the `sync-upstream` workflow.
-- `packages/desktop-client/postcss.config.cjs` — PostCSS pipeline (Tailwind + Autoprefixer) for the dashboard redesign (Phase 0). Picked up by Vite at the project root.
-- `packages/desktop-client/tailwind.config.cjs` — Tailwind config scoped to the dashboard. Preflight is OFF so it does not touch Actual's inline-style codebase. Contains the obsidian + violet palette tokens and Tremor's required color blocks.
+- `packages/desktop-client/postcss.config.cjs` — PostCSS pipeline (Tailwind + Autoprefixer) for the dashboard primitives. Picked up by Vite at the project root.
+- `packages/desktop-client/tailwind.config.cjs` — Tailwind config scoped to the dashboard. Preflight is OFF so it does not touch Actual's inline-style codebase. Safelists slate / violet / indigo / rose for Tremor's runtime class generation. **Color values here are not the source of truth — Mercury tokens in `themes/dark.ts` / `themes/light.ts` are.** See `docs/design.md`.
 - `packages/desktop-client/src/style/finance-layout.css` — layout + typography overrides not exposed as theme tokens.
-- `packages/desktop-client/src/style/finance-dashboard.css` — Tailwind + Tremor entry (`@tailwind base/components/utilities`) and the `.finance-dashboard-scope` background gradient (Phase 0).
-- `packages/desktop-client/src/components/reports/dashboard/DashboardCard.tsx` — glass-chrome wrapper. Composes upstream `ReportCard` for menu + viewport-defer UX, replaces its visual chrome with the obsidian glass (Phase 0).
-- `packages/desktop-client/src/components/reports/dashboard/KPI.tsx` — KPI primitive (hero number + optional delta pill + optional Tremor `SparkAreaChart`). Workhorse for Phase 1+ rebuilt cards (Phase 0).
+- `packages/desktop-client/src/style/finance-dashboard.css` — Tailwind + Tremor entry (`@tailwind base/components/utilities`) plus a minimal `.finance-dashboard-scope` rule (sets `color-scheme: dark` and `min-height: 100%`). No background or color values — those come from Mercury tokens.
+- `packages/desktop-client/src/components/reports/dashboard/DashboardCard.tsx` — thin wrapper around upstream `ReportCard` that adds consistent 20px padding and `color: theme.pageText`. Adds no visual chrome of its own; Mercury tokens drive the look.
+- `packages/desktop-client/src/components/reports/dashboard/KPI.tsx` — KPI primitive (hero number + optional delta pill + optional Tremor `SparkAreaChart`). All text colors sourced from `theme.*`; never hardcoded.
 - `packages/desktop-client/src/components/reports/spreadsheets/ytd-flow-spreadsheet.ts` — YTD income/expense sum query shared by the hero KPIs (Phase 1) and the Phase 2 Savings Rate card. On-budget only, uses `category.is_income` filter for consistency with `month-over-month-spreadsheet`.
 - `packages/desktop-client/src/components/reports/reports/YTDFlowCard.tsx` — shared shell for the two YTD hero KPIs. DashboardCard + KPI + KPI.Currency, parameterized by `kind: 'income' | 'expense'` (Phase 1).
 - `packages/desktop-client/src/components/reports/reports/TotalIncomeYTDCard.tsx` — thin wrapper, `kind='income'` (Phase 1).

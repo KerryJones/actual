@@ -18,6 +18,17 @@ This is Kerry's personal fork of [Actual Budget](https://github.com/actualbudget
 2. **Canonical** — use the standard/documented approach for Actual / React / Recharts.
 3. **Simple** — prefer the simplest solution that works.
 
+### Design system — one token source
+
+**Every color, border, background, and text color in the dashboard reads from Mercury theme tokens (`theme.*` in JS, `var(--color-*)` in CSS). Never hardcode.**
+
+- Single source of truth: `packages/desktop-client/src/style/themes/dark.ts` and `themes/light.ts`. Change a value there → every card on the page restyles.
+- Forbidden in any `.tsx` under `components/reports/dashboard/` or `components/reports/reports/`: `text-slate-*`, `bg-slate-*`, `border-slate-*`, `text-rose-*`, `text-emerald-*`, any hex/rgba literal, any color-bearing Tailwind class.
+- Permitted: `theme.pageTextDark`, `theme.pageTextLight`, `theme.pageTextSubdued`, `theme.numberPositive`, `theme.numberNegative`, `theme.tableBackground`, `theme.cardBackground`, etc. via `import { theme } from '@actual-app/components/theme'`.
+- Tailwind in this fork exists only for (a) Tremor's chart components and (b) mechanical layout utilities (`flex`, `gap-*`, `text-xs`, `tabular-nums`). Not for chrome.
+- If you need a color that doesn't have a token, add the token in `themes/dark.ts` + `themes/light.ts` first, then reference it. Do not bypass.
+- See `docs/design.md` for the full rule + token map.
+
 ### Communication
 
 - **Research before guessing.** Read the relevant `docs/` file before starting any non-trivial task.

@@ -1,11 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { theme } from '@actual-app/components/theme';
 import { integerToAmount } from '@actual-app/core/shared/util';
 
 import { DateRange } from '#components/reports/DateRange';
 import { DashboardCard } from '#components/reports/dashboard/DashboardCard';
-import { KPI } from '#components/reports/dashboard/KPI';
+import { KPI, KPICurrency } from '#components/reports/dashboard/KPI';
 import {
   getYTDFlowData,
   type YTDFlowData,
@@ -52,14 +53,19 @@ export function YTDFlowCard({
         label={defaultName}
         value={
           data ? (
-            <KPI.Currency
+            <KPICurrency
               amount={integerToAmount(
                 kind === 'income' ? data.income : data.expense,
               )}
-              tone={kind === 'expense' ? 'negative' : 'default'}
+              isNegative={kind === 'expense'}
             />
           ) : (
-            <span className="text-4xl text-slate-500 tabular-nums">—</span>
+            <span
+              className="text-4xl tabular-nums"
+              style={{ color: theme.pageTextSubdued }}
+            >
+              —
+            </span>
           )
         }
         hint={data ? <DateRange start={data.start} end={data.end} /> : null}

@@ -771,7 +771,7 @@ export function Overview({ dashboard }: OverviewProps) {
       {isImporting ? (
         <LoadingIndicator message={t('Import is running...')} />
       ) : (
-        <div className="finance-dashboard-scope">
+        <div className="finance-dashboard-scope dark">
           <View
             data-testid="reports-overview"
             innerRef={containerRef}

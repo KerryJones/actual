@@ -1,21 +1,12 @@
-/* FINANCE FORK: Tailwind + Tremor entry, scoped to the /reports dashboard.
- * Imported by Overview.tsx so the bundle ships only on the reports route.
- * Preflight is disabled in tailwind.config.cjs (would conflict with
- * Actual's inline-style codebase). */
+/* Tailwind + Tremor entry for the /reports dashboard. Preflight is OFF (see
+ * tailwind.config.cjs) so Tailwind's reset doesn't bleed into the rest of
+ * Actual's inline-style codebase. Color rules: docs/design.md. */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 .finance-dashboard-scope {
-  /* Pure slate-950 reads as flat black on OLED; the radial gradient gives
-   * the obsidian surface depth and gives backdrop-blur something visible. */
-  background:
-    radial-gradient(
-      ellipse at top,
-      rgba(15, 23, 42, 1) 0%,
-      rgba(2, 6, 23, 1) 60%
-    );
   min-height: 100%;
   color-scheme: dark;
 }
