@@ -92,65 +92,46 @@ All three consume theme tokens only — never hard-coded colors — so the Phase
 
 ---
 
-# Dashboard primitives — Mercury, not a separate system
+# Dashboard cards — Mercury only
 
-The /reports dashboard uses **the same Mercury tokens** as the rest of the app. There is no "obsidian" or "violet" palette, no parallel design system, no card-specific color values. Every visible color on a dashboard card resolves to `theme.*` from `@actual-app/components/theme`, which resolves to the values exported from `themes/dark.ts` and `themes/light.ts`.
+The /reports dashboard uses **the same Mercury tokens** as the rest of the app. There is no obsidian, no violet, no parallel design system, no card-specific color values. Every visible color on a dashboard card resolves to `theme.*` from `@actual-app/components/theme`, which resolves to the values exported from `themes/dark.ts` and `themes/light.ts`.
 
 ## The rule
 
 **Dashboard chrome, text, borders, and backgrounds must come from Mercury theme tokens — never from hardcoded Tailwind color classes or hex literals.**
 
-If you find yourself typing `text-slate-*`, `bg-slate-*`, `border-slate-*`, `text-rose-*`, `bg-emerald-*/15`, or any hex/rgba into a `.tsx` file under `components/reports/dashboard/` or `components/reports/reports/`, stop. Use `style={{ color: theme.pageTextDark }}` (or the appropriate token) instead. The whole point is that changing one value in `themes/dark.ts` restyles every card on the page.
-
-Concretely:
+If you find yourself typing `text-slate-*`, `bg-slate-*`, `border-slate-*`, `text-rose-*`, `bg-emerald-*/15`, or any hex/rgba into a `.tsx` file under `components/reports/reports/`, stop. Use `style={{ color: theme.pageTextDark }}` (or the appropriate token) instead. The whole point is that changing one value in `themes/dark.ts` restyles every card on the page.
 
 | Need                              | Use                                                          |
 | --------------------------------- | ------------------------------------------------------------ |
-| Card background                   | Inherits from `ReportCard` → `theme.tableBackground`         |
-| Card border / shadow              | Inherits from `ReportCard`                                   |
-| Hero number color                 | `theme.pageTextDark`                                         |
-| Label / eyebrow color             | `theme.pageTextLight`                                        |
-| Hint / subline color              | `theme.pageTextSubdued`                                      |
-| Negative-tone number              | `theme.numberNegative`                                       |
-| Positive delta pill text/bg       | `theme.numberPositive` (bg via `color-mix(... 15%, transparent)`) |
-| Negative delta pill text/bg       | `theme.numberNegative`                                       |
-| Card padding                      | `padding: 20` (matches upstream `SummaryCard` etc.)          |
+| Card chrome (bg/border/shadow)    | Use `ReportCard` — it reads `theme.tableBackground` etc.     |
+| Header (title + date range)       | `ReportCardName` + `DateRange` in a 20px-padded header `View` |
+| Hero number                       | `SummaryNumber` (auto-fits font; colors by sign via `theme.reportsNumber*`) |
+| Static text colors                | `theme.pageText`, `theme.pageTextLight`, `theme.pageTextSubdued` |
+| Card padding                      | `padding: 20`                                                 |
 
-## What Tailwind is (and isn't) for
+## What Tailwind / Tremor are (and aren't) for
 
-Tailwind is in this codebase **only** for:
+Tailwind v3 and `@tremor/react` are installed as Phase 0 infrastructure for future chart needs (Phase 2 Savings Rate sparkline, Net Worth composition area chart, etc.). After the Phase 3 YTD refactor there are no current consumers; the pipeline ships near-zero CSS until something inside `components/reports/dashboard/` or `components/reports/reports/` references a Tailwind class.
 
-1. Tremor's chart components (which require Tailwind under the hood for their internal chrome and the `colors={[...]}` prop).
-2. Mechanical layout utilities inside dashboard primitives — `flex`, `gap-*`, `tabular-nums`, `inline-flex`, `text-xs`, `text-4xl`, `tracking-wider`, `uppercase`, etc. These are sizing/spacing/typography, not visual design tokens.
-
-Tailwind is **not** for chrome colors, text colors, borders, or backgrounds. Those go through `theme.*`.
+If a Phase 2 card needs a Tremor chart, the rules are:
+1. Card chrome (background, border, padding, text colors) still goes through `theme.*` — Tremor is for the chart guts only.
+2. Tremor `colors={[...]}` palette: prefer `'indigo'` (closest to Mercury's `buttonPrimaryBackground`, `#7785c8`). Other Mercury-aligned options: `'rose'` for negative, `'emerald'` for positive.
+3. Layout utility classes (`flex`, `gap-*`, `tabular-nums`) are fine. Color/background classes are not.
 
 ## Scope mechanism
 
-- `tailwind.config.cjs` `content` array only includes `src/components/reports/dashboard/**`, `src/components/reports/reports/**`, the dashboard CSS file, and `node_modules/@tremor/**`. Nothing else.
-- `corePlugins.preflight: false` — Tailwind's CSS reset is OFF. Without this, Tailwind's reset would override Actual's typography across the entire app. Tremor components style themselves explicitly so they don't need the reset.
-- `darkMode: 'class'` — dark variants only apply inside an element with class `dark`. The page scope div (`finance-dashboard-scope dark` in `Overview.tsx`) sets it once so Tremor children inherit; individual cards do not need to add it.
-- Tailwind safelists slate / violet / indigo / rose color names so Tremor's runtime class generation (e.g. `<SparkAreaChart colors={['indigo']}>`) survives tree-shaking. **Safelisting does not mean "use these colors directly in cards" — they exist for Tremor's internal class generation only.**
-
-## Primitives
-
-| Primitive            | File                                                                                          | Role                                                                                |
-| -------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `DashboardCard`      | `packages/desktop-client/src/components/reports/dashboard/DashboardCard.tsx`                  | Thin wrapper around `ReportCard` with consistent 20px padding and `color: theme.pageText`. Adds nothing visually — the chrome IS Mercury. |
-| `KPI`                | `packages/desktop-client/src/components/reports/dashboard/KPI.tsx`                            | Hero-number layout (label + value + delta + sparkline). Text colors all from `theme.*`. |
-| `KPI.Currency`       | same file                                                                                     | Currency-formatted hero value with smaller-symbol treatment. `tone='negative'` switches digits to `theme.numberNegative`. |
-| `KPI.Percentage`     | same file                                                                                     | Percentage hero value (digits + `%`).                                                |
-
-## Tremor chart colors
-
-When a Tremor chart needs a color via its `colors={[...]}` prop, prefer `'indigo'` (closest to Mercury's `buttonPrimaryBackground` accent, `#7785c8`). If a chart needs to read directly from Mercury accent, pass the token through `style` or use Recharts directly (Tremor charts wrap Recharts, so the escape hatch is there).
+- `tailwind.config.cjs` `content` array includes `src/components/reports/dashboard/**`, `src/components/reports/reports/**`, the dashboard CSS file, and `node_modules/@tremor/**`. Nothing else.
+- `corePlugins.preflight: false` — Tailwind's CSS reset is OFF so it doesn't override Actual's typography app-wide.
+- `darkMode: 'class'` — dark variants only apply inside an element with class `dark`. The page scope div (`finance-dashboard-scope dark` in `Overview.tsx`) sets it once.
+- Safelist for slate / violet / indigo / rose color names so Tremor's runtime class generation survives tree-shaking. Not for direct use in cards.
 
 ## Phase 1 cards
 
-- **Total Income (YTD)** — hero KPI. On-budget income transactions, Jan 1 of current year through today. Uses `ytd-flow-spreadsheet`, rendered via `<YTDFlowCard kind='income'>`. Digits in `theme.pageTextDark`.
-- **Total Expenses (YTD)** — same query, `kind='expense'`. Digits in `theme.numberNegative` via `KPI.Currency tone='negative'`.
-- **Sankey card** — upstream widget, feature flag default flipped to `true` for this fork. Uses its existing Recharts chrome; chart colors come from `chart-theme.ts`.
-- **Calendar card** — upstream widget, already in the add menu. Renders inside Mercury chrome via `ReportCard`.
+- **Total Income (YTD)** — hero number, on-budget income transactions, Jan 1 of current year through today. Uses `ytd-flow-spreadsheet`. Rendered through `<YTDFlowCard kind='income'>` which composes `ReportCard` + `ReportCardName` + `DateRange` + `SummaryNumber` (same structure as upstream `SummaryCard`).
+- **Total Expenses (YTD)** — same query, `kind='expense'`. The card passes a sign-flipped negative value to `SummaryNumber` so it colors via `theme.reportsNumberNegative`.
+- **Sankey card** — upstream widget, feature flag default flipped to `true` for this fork.
+- **Calendar card** — upstream widget, already in the add menu.
 
 ## Where to make changes
 
@@ -158,9 +139,7 @@ When a Tremor chart needs a color via its `colors={[...]}` prop, prefer `'indigo
 | ------------------------------- | ------------------------------------------------------------------------------- |
 | **Any color** on any card        | `packages/desktop-client/src/style/themes/dark.ts` / `light.ts` (the **only** source of truth) |
 | Chart palettes (Recharts)        | `packages/desktop-client/src/style/themes/dark.ts` (`reports*` and `chartQual*` exports) |
-| Tailwind safelist (Tremor needs) | `packages/desktop-client/tailwind.config.cjs`                                   |
-| PostCSS pipeline                 | `packages/desktop-client/postcss.config.cjs`                                   |
+| YTD card data / behavior         | `packages/desktop-client/src/components/reports/reports/YTDFlowCard.tsx` and `spreadsheets/ytd-flow-spreadsheet.ts` |
 | Dashboard scope CSS              | `packages/desktop-client/src/style/finance-dashboard.css`                       |
-| Card padding / inner layout      | `packages/desktop-client/src/components/reports/dashboard/DashboardCard.tsx`    |
-| KPI text-size hierarchy          | `packages/desktop-client/src/components/reports/dashboard/KPI.tsx`              |
+| Tailwind safelist / config       | `packages/desktop-client/tailwind.config.cjs`                                   |
 | Where the dashboard scope class is applied | `packages/desktop-client/src/components/reports/Overview.tsx`         |

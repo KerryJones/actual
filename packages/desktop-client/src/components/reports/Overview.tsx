@@ -1027,6 +1027,10 @@ export function Overview({ dashboard }: OverviewProps) {
                         ) : widget.type === 'total-income-ytd-card' ? (
                           <TotalIncomeYTDCard
                             isEditing={isEditing}
+                            meta={widget.meta}
+                            onMetaChange={newMeta =>
+                              onMetaChange(item, newMeta)
+                            }
                             onRemove={() => onRemoveWidget(item.i)}
                             onCopy={targetDashboardId =>
                               onCopyWidget(item.i, targetDashboardId)
@@ -1035,6 +1039,10 @@ export function Overview({ dashboard }: OverviewProps) {
                         ) : widget.type === 'total-expenses-ytd-card' ? (
                           <TotalExpensesYTDCard
                             isEditing={isEditing}
+                            meta={widget.meta}
+                            onMetaChange={newMeta =>
+                              onMetaChange(item, newMeta)
+                            }
                             onRemove={() => onRemoveWidget(item.i)}
                             onCopy={targetDashboardId =>
                               onCopyWidget(item.i, targetDashboardId)
