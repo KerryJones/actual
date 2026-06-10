@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { View } from '@actual-app/components/view';
-import { integerToAmount } from '@actual-app/core/shared/util';
 
 import { DateRange } from '#components/reports/DateRange';
 import { LoadingIndicator } from '#components/reports/LoadingIndicator';
@@ -45,11 +44,13 @@ export function YTDFlowCard({
 
   const data = useReport<YTDFlowData>('ytd-flow', getYTDFlowData);
 
-  // SummaryNumber colors by sign: income stays positive (green),
-  // expense is flipped negative (red) — the spreadsheet returns both as
-  // positive cents.
-  const signedAmount = data
-    ? integerToAmount(kind === 'income' ? data.income : -data.expense)
+  // SummaryNumber expects integer cents and colors by sign. The spreadsheet
+  // returns both income and expense as positive cents; flip expense to negative
+  // so SummaryNumber paints it via reportsNumberNegative.
+  const signedAmountCents = data
+    ? kind === 'income'
+      ? data.income
+      : -data.expense
     : 0;
 
   return (
@@ -98,7 +99,7 @@ export function YTDFlowCard({
         >
           {data ? (
             <SummaryNumber
-              value={signedAmount}
+              value={signedAmountCents}
               contentType="sum"
               loading={false}
             />
