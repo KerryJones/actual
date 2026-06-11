@@ -86,7 +86,7 @@ export const getCategoryTrendData = async (
 
   const series: CategoryTrendSeries[] = top.map(([category, { values }]) => {
     const last3 = values.slice(-3);
-    const baseline = last3.reduce((a, b) => a + b, 0) / 3;
+    const baseline = Math.round(last3.reduce((a, b) => a + b, 0) / 3);
     return { category, values, baseline };
   });
 

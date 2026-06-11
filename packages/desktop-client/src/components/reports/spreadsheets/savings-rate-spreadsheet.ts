@@ -22,8 +22,8 @@ export type SavingsRateData = {
   start: string;
   end: string;
   months: SavingsRatePoint[];
-  /** Most recent month's rate, in -1..1 */
-  currentRate: number;
+  /** Trailing-12-month aggregate rate, in -1..1 */
+  trailingRate: number;
 };
 
 type MonthRow = { month: string; amount: number };
@@ -72,6 +72,11 @@ export const getSavingsRateData = async (
     return { month: m, income: i, expense: e, rate };
   });
 
-  const currentRate = months[months.length - 1]?.rate ?? 0;
-  setData({ start, end, months, currentRate });
+  const totalIncome = months.reduce((a, m) => a + m.income, 0);
+  const totalExpense = months.reduce((a, m) => a + m.expense, 0);
+  const trailingRate =
+    totalIncome > 0
+      ? Math.max(-1, Math.min(1, (totalIncome - totalExpense) / totalIncome))
+      : 0;
+  setData({ start, end, months, trailingRate });
 };

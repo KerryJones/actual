@@ -82,12 +82,12 @@ export const getTopMoversData = async (
 
   const rows: TopMoverRow[] = [...byKey.entries()].map(
     ([category, { current, baselineTotal }]) => {
-      const baselineAvg = baselineTotal / 3;
+      const baseline = Math.round(baselineTotal / 3);
       return {
         category,
         current,
-        baseline: baselineAvg,
-        delta: current - baselineAvg,
+        baseline,
+        delta: current - baseline,
       };
     },
   );

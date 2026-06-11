@@ -11,8 +11,6 @@ export type RecurringRow = {
   payee: string;
   count: number;
   cadence: RecurringCadence;
-  /** Mean charge amount, positive cents. */
-  meanAmount: number;
   /** Normalized to monthly equivalent, positive cents. */
   monthlyCost: number;
   /** monthlyCost * 12, positive cents. */
@@ -133,12 +131,11 @@ export const getRecurringAuditorData = async (
     const cadence = classifyCadence(medianGap);
     if (!cadence) continue;
 
-    const monthlyCost = mean * CADENCE_MULTIPLIER[cadence];
+    const monthlyCost = Math.round(mean * CADENCE_MULTIPLIER[cadence]);
     rows.push({
       payee,
       count: txns.length,
       cadence,
-      meanAmount: mean,
       monthlyCost,
       annualCost: monthlyCost * 12,
       lastCharged: txns[txns.length - 1].date,

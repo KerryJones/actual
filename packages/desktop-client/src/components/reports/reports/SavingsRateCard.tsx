@@ -44,7 +44,7 @@ export function SavingsRateCard({
   const sparklineData = data
     ? data.months.map(m => ({ x: m.month, y: m.rate * 100 }))
     : [];
-  const positive = (data?.currentRate ?? 0) >= 0;
+  const positive = (data?.trailingRate ?? 0) >= 0;
   const sparklineColor = positive
     ? theme.reportsNumberPositive
     : theme.reportsNumberNegative;
@@ -95,7 +95,7 @@ export function SavingsRateCard({
         >
           {data ? (
             <SummaryNumber
-              value={data.currentRate * 100}
+              value={data.trailingRate * 100}
               contentType="percentage"
               suffix="%"
               loading={false}
