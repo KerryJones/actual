@@ -7,10 +7,11 @@ import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
 
 import { PrivacyFilter } from '#components/PrivacyFilter';
+import { ProgressBar } from '#components/reports/charts/ProgressBar';
 import type { MonthOverMonthData } from '#components/reports/spreadsheets/month-over-month-spreadsheet';
 import { useFormat } from '#hooks/useFormat';
 
-const MAX_ROWS = 8;
+const MAX_ROWS = 5;
 
 export type CategoriesById = {
   list: Record<string, { name: string } | undefined>;
@@ -35,10 +36,6 @@ export function CategoryComparisonList({
   const { t } = useTranslation();
   const format = useFormat();
   const rows = data.rows.slice(0, MAX_ROWS);
-  const maxAbs = Math.max(
-    1,
-    ...rows.flatMap(r => [Math.abs(r.currentTotal), Math.abs(r.previousTotal)]),
-  );
 
   if (rows.length === 0) {
     return (
@@ -50,12 +47,21 @@ export function CategoryComparisonList({
     );
   }
 
+  const maxDelta = Math.max(
+    1,
+    ...rows.map(r => Math.abs(r.currentTotal - r.previousTotal)),
+  );
+
   return (
     <View style={{ marginTop: 8, gap: 10 }}>
       {rows.map(row => {
         // delta < 0 means current is more negative → spent more this window
         const delta = row.currentTotal - row.previousTotal;
+        const absDelta = Math.abs(delta);
         const spentMore = delta < 0;
+        const accent = spentMore
+          ? theme.reportsNumberNegative
+          : theme.reportsNumberPositive;
         return (
           <View key={row.category} style={{ gap: 2 }}>
             <View
@@ -66,83 +72,30 @@ export function CategoryComparisonList({
                 color: theme.tableText,
               }}
             >
-              <span>{categoryName(categoryMaps, row.category, t)}</span>
               <span
                 style={{
-                  color: spentMore
-                    ? theme.reportsNumberNegative
-                    : theme.reportsNumberPositive,
-                  fontWeight: 500,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  paddingRight: 8,
                 }}
               >
+                {categoryName(categoryMaps, row.category, t)}
+              </span>
+              <span style={{ color: accent, fontWeight: 500 }}>
                 <PrivacyFilter>
-                  {(spentMore ? '+' : '−') +
-                    format(Math.abs(delta), 'financial')}
+                  {(spentMore ? '+' : '−') + format(absDelta, 'financial')}
                 </PrivacyFilter>
               </span>
             </View>
-            <ComparisonBar
-              currentMagnitude={Math.abs(row.currentTotal)}
-              previousMagnitude={Math.abs(row.previousTotal)}
-              maxAbs={maxAbs}
-              spentMore={spentMore}
+            <ProgressBar
+              percent={(absDelta / maxDelta) * 100}
+              color={accent}
+              height={6}
             />
           </View>
         );
       })}
-    </View>
-  );
-}
-
-function ComparisonBar({
-  currentMagnitude,
-  previousMagnitude,
-  maxAbs,
-  spentMore,
-}: {
-  currentMagnitude: number;
-  previousMagnitude: number;
-  maxAbs: number;
-  spentMore: boolean;
-}) {
-  const currentPct = (currentMagnitude / maxAbs) * 100;
-  const previousPct = (previousMagnitude / maxAbs) * 100;
-  return (
-    <View style={{ gap: 2 }}>
-      <View
-        style={{
-          height: 6,
-          backgroundColor: theme.tableBorder,
-          borderRadius: 3,
-          overflow: 'hidden',
-        }}
-      >
-        <View
-          style={{
-            width: `${currentPct}%`,
-            height: '100%',
-            backgroundColor: spentMore
-              ? theme.reportsNumberNegative
-              : theme.reportsNumberPositive,
-          }}
-        />
-      </View>
-      <View
-        style={{
-          height: 4,
-          backgroundColor: theme.tableBorder,
-          borderRadius: 2,
-          overflow: 'hidden',
-        }}
-      >
-        <View
-          style={{
-            width: `${previousPct}%`,
-            height: '100%',
-            backgroundColor: theme.pageTextSubdued,
-          }}
-        />
-      </View>
     </View>
   );
 }
