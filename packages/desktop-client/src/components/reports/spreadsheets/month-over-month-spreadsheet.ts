@@ -1,14 +1,13 @@
-// FINANCE FORK: shared spreadsheet for two-window category comparisons.
-// Used by MonthOverMonthCard (current vs previous month) and YTDCategoryCard
-// (YTD this year vs same period last year). Returns per-category totals for
-// each window, in cents and as-recorded sign (expenses are negative).
+// FINANCE FORK: two-window per-category expense comparison.
 import { q } from '@actual-app/core/shared/query';
 
 import type { useSpreadsheet } from '#hooks/useSpreadsheet';
 import { aqlQuery } from '#queries/aqlQuery';
 
+import { buildFlowFilter } from './flowFilter';
+
 export type CategoryWindowComparison = {
-  // category id, or '__uncategorized__' when the transaction has no category
+  /** category id (the filter guarantees non-null) */
   category: string;
   currentTotal: number;
   previousTotal: number;
@@ -30,7 +29,7 @@ type CreateMonthOverMonthSpreadsheetProps = {
 };
 
 type CategoryAmountRow = {
-  category: string | null;
+  category: string;
   amount: number;
 };
 
@@ -40,15 +39,7 @@ async function queryCategoryTotals(
 ): Promise<CategoryAmountRow[]> {
   const { data } = await aqlQuery(
     q('transactions')
-      .filter({
-        $and: [
-          { date: { $gte: startDate } },
-          { date: { $lte: endDate } },
-          { amount: { $lt: 0 } },
-          { 'account.offbudget': false },
-          { 'category.is_income': false },
-        ],
-      })
+      .filter(buildFlowFilter(startDate, endDate, 'expense'))
       .groupBy([{ $id: '$category' }])
       .select([
         { category: { $id: '$category' } },
@@ -73,26 +64,27 @@ export function createMonthOverMonthSpreadsheet({
       queryCategoryTotals(previousStart, previousEnd),
     ]);
 
-    const keyOf = (r: CategoryAmountRow) => r.category ?? '__uncategorized__';
-
     const byKey = new Map<
       string,
       { currentTotal: number; previousTotal: number }
     >();
     for (const row of current) {
-      const k = keyOf(row);
-      const entry = byKey.get(k) ?? { currentTotal: 0, previousTotal: 0 };
+      const entry = byKey.get(row.category) ?? {
+        currentTotal: 0,
+        previousTotal: 0,
+      };
       entry.currentTotal += row.amount;
-      byKey.set(k, entry);
+      byKey.set(row.category, entry);
     }
     for (const row of previous) {
-      const k = keyOf(row);
-      const entry = byKey.get(k) ?? { currentTotal: 0, previousTotal: 0 };
+      const entry = byKey.get(row.category) ?? {
+        currentTotal: 0,
+        previousTotal: 0,
+      };
       entry.previousTotal += row.amount;
-      byKey.set(k, entry);
+      byKey.set(row.category, entry);
     }
 
-    // Sort by absolute current-window size descending (biggest spend first).
     const rows: CategoryWindowComparison[] = [...byKey.entries()]
       .map(([category, totals]) => ({ category, ...totals }))
       .sort((a, b) => Math.abs(b.currentTotal) - Math.abs(a.currentTotal));

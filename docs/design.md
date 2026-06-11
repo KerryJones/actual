@@ -133,6 +133,23 @@ If a Phase 2 card needs a Tremor chart, the rules are:
 - **Sankey card** — upstream widget, feature flag default flipped to `true` for this fork.
 - **Calendar card** — upstream widget, already in the add menu.
 
+## Phase 2 cards (analytical layer)
+
+All Phase 2 cards consume Mercury theme tokens only, store integer cents in their spreadsheet outputs, and follow the same `ReportCard` → padded header (`ReportCardName` + `DateRange` or subtitle) → body structure as upstream cards.
+
+- **Savings Rate** — `SavingsRateCard.tsx` + `savings-rate-spreadsheet.ts`. Hero number is current month's `(income − expense) / income`, clamped to `[−1, 1]`. Sparkline body is the trailing 12 months via the shared `CompactAreaChart` primitive (`charts/CompactAreaChart.tsx`), colored by sign through `theme.reportsNumberPositive` / `theme.reportsNumberNegative`. Same filter as `ytd-flow-spreadsheet` so numbers reconcile.
+- **FI Progress** — `FIProgressCard.tsx` + `fi-progress-spreadsheet.ts`. Hero is `net_worth / (annual_expense × 25)` as a percentage. Net worth comes from per-account balance queries (one per account from `useAccounts()` at `currentDay`); annual expense is the trailing-12-mo expense total. Progress bar clamps the visualization to `[0, 100]%` while the hero number shows the actual value.
+- **Top Movers** — `TopMoversCard.tsx` + `top-movers-spreadsheet.ts`. Two columns of categories (up movers left, down movers right) ranked by `abs(delta)` against trailing-3-mo average. Up movers use `theme.reportsNumberNegative` (spending more = bad); down movers use `theme.reportsNumberPositive`. Bar widths normalize to `max(abs(delta))` across both columns.
+- **Spending by Category** — `CategoryTrendCard.tsx` + `category-trend-spreadsheet.ts`. 3×3 grid of `CompactAreaChart` sparklines, one per top-9 expense category by trailing-12-mo total. Each cell overlays a Recharts `ReferenceLine` at the trailing-3-mo average for visual deviation.
+- **Recurring Charges** — `RecurringAuditorCard.tsx` + `recurring-auditor-spreadsheet.ts`. Auto-detects recurring payees without relying on Actual's `schedules` table. Detection rules: ≥3 occurrences, `stdev(amounts) / mean(amounts) ≤ 0.1`, median gap in `{monthly: [28, 31], quarterly: [85, 95], yearly: [355, 375]}` days. Pure text rows sorted by annual cost descending.
+- **Net Worth Composition** *(gated)* — `NetWorthCompositionCard.tsx` + `net-worth-composition-spreadsheet.ts`. Stacked Recharts `AreaChart` of Liquid / Investments / Real Estate / Debt over 24 months. Bucket is parsed from a bracket prefix on the account name (`[L]`, `[I]`, `[R]`, `[D]`); unprefixed accounts default to Liquid. Colors come from `getColorScale('qualitative')` (Mercury's `chartQual1..4`). Useful only after accounts are renamed.
+
+Universal Phase 2 conventions:
+
+- Integer cents flow all the way to `SummaryNumber` — never call `integerToAmount` ahead of it. `format(_, 'financial')` divides by 100 internally.
+- Card body charts use `useId()`-derived gradient ids so multiple instances on the page don't collide.
+- New widget types live in the `SpecializedWidget` union (`packages/loot-core/src/types/models/dashboard.ts`) and the `isWidgetType` allowlist (`packages/loot-core/src/server/dashboard/app.ts`).
+
 ## Where to make changes
 
 | Change                          | File                                                                            |

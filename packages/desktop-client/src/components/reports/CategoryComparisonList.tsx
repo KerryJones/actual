@@ -17,6 +17,14 @@ export type CategoriesById = {
   grouped: Record<string, { name: string } | undefined>;
 };
 
+export function categoryName(
+  maps: CategoriesById,
+  id: string,
+  t: (key: string) => string,
+): string {
+  return maps.list[id]?.name ?? t('Unknown category');
+}
+
 export function CategoryComparisonList({
   data,
   categoryMaps,
@@ -31,11 +39,6 @@ export function CategoryComparisonList({
     1,
     ...rows.flatMap(r => [Math.abs(r.currentTotal), Math.abs(r.previousTotal)]),
   );
-
-  const nameFor = (id: string) =>
-    id === '__uncategorized__'
-      ? t('Uncategorized')
-      : (categoryMaps.list[id]?.name ?? t('Unknown category'));
 
   if (rows.length === 0) {
     return (
@@ -63,7 +66,7 @@ export function CategoryComparisonList({
                 color: theme.tableText,
               }}
             >
-              <span>{nameFor(row.category)}</span>
+              <span>{categoryName(categoryMaps, row.category, t)}</span>
               <span
                 style={{
                   color: spentMore

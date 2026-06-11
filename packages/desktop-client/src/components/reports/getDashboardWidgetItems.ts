@@ -35,6 +35,12 @@ type DashboardWidgetMenuName =
   | 'subscriptions-card'
   | 'total-income-ytd-card'
   | 'total-expenses-ytd-card'
+  | 'savings-rate-card'
+  | 'fi-progress-card'
+  | 'top-movers-card'
+  | 'category-trend-card'
+  | 'recurring-auditor-card'
+  | 'net-worth-composition-card'
   | `custom-report-${string}`;
 
 function findItemIndex(
@@ -100,6 +106,30 @@ export function getDashboardWidgetItems({
     {
       name: 'subscriptions-card',
       text: t('Monthly subscriptions'),
+    },
+    {
+      name: 'savings-rate-card',
+      text: t('Savings Rate'),
+    },
+    {
+      name: 'fi-progress-card',
+      text: t('FI Progress'),
+    },
+    {
+      name: 'top-movers-card',
+      text: t('Top Movers'),
+    },
+    {
+      name: 'category-trend-card',
+      text: t('Spending by Category'),
+    },
+    {
+      name: 'recurring-auditor-card',
+      text: t('Recurring Charges'),
+    },
+    {
+      name: 'net-worth-composition-card',
+      text: t('Net Worth Composition'),
     },
     {
       name: 'custom-report',

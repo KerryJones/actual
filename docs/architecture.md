@@ -64,6 +64,19 @@ Keep this list current as work proceeds. Files outside this list should not be m
 - `packages/desktop-client/src/components/reports/CategoryComparisonList.tsx` — shared list/bar UI used inside the comparison card.
 - `packages/desktop-client/src/components/reports/spreadsheets/month-over-month-spreadsheet.ts` — custom data query (Phase 2).
 - `packages/desktop-client/src/components/reports/util-monthly-equivalent.ts` — helper for normalizing recurring schedule amounts to monthly (Phase 2).
+- `packages/desktop-client/src/components/reports/charts/CompactAreaChart.tsx` — shared sparkline primitive distilled from `AreaGraph.tsx`. Used by `SavingsRateCard` and `CategoryTrendCard` (Phase 2).
+- `packages/desktop-client/src/components/reports/reports/SavingsRateCard.tsx` — Phase 2 analytical card: current-month `(income − expense) / income` with trailing-12-month sparkline.
+- `packages/desktop-client/src/components/reports/spreadsheets/savings-rate-spreadsheet.ts` — companion query: 12 monthly income/expense buckets, same filter as `ytd-flow-spreadsheet`.
+- `packages/desktop-client/src/components/reports/reports/FIProgressCard.tsx` — Phase 2: `net_worth / (annual_expense × 25)` hero number plus capped progress bar. Receives `accounts` from `useAccounts()` via Overview dispatch.
+- `packages/desktop-client/src/components/reports/spreadsheets/fi-progress-spreadsheet.ts` — companion query: per-account balance at currentDay + trailing-12-mo expense.
+- `packages/desktop-client/src/components/reports/reports/TopMoversCard.tsx` — Phase 2: two-column (up / down) per-category delta vs trailing-3-mo average.
+- `packages/desktop-client/src/components/reports/spreadsheets/top-movers-spreadsheet.ts` — companion query.
+- `packages/desktop-client/src/components/reports/reports/CategoryTrendCard.tsx` — Phase 2: 3×3 small-multiple grid of 12-month category sparklines with trailing-3-mo reference lines.
+- `packages/desktop-client/src/components/reports/spreadsheets/category-trend-spreadsheet.ts` — companion query: top 9 expense categories by trailing-12-mo total, with per-month series.
+- `packages/desktop-client/src/components/reports/reports/RecurringAuditorCard.tsx` — Phase 2: auto-detected recurring charges by payee. Independent of Actual's `schedules` table; replaces the upstream-style `SubscriptionsCard` use case.
+- `packages/desktop-client/src/components/reports/spreadsheets/recurring-auditor-spreadsheet.ts` — detection algorithm: ≥3 occurrences, amount stdev / mean ≤ 0.1, median gap in `{monthly, quarterly, yearly}` band.
+- `packages/desktop-client/src/components/reports/reports/NetWorthCompositionCard.tsx` — Phase 2 (gated): stacked area chart of Liquid / Investments / Real Estate / Debt over 24 months. Bucket parsed from `[L|I|R|D]` prefix in account name; unprefixed accounts fall into Liquid.
+- `packages/desktop-client/src/components/reports/spreadsheets/net-worth-composition-spreadsheet.ts` — companion query.
 - `docs/architecture.md`, `docs/design.md`, `docs/rebase-strategy.md` — this fork's documentation.
 
 ### Modified upstream files (will conflict during rebases)

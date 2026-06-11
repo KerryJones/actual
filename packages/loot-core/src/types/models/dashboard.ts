@@ -142,6 +142,30 @@ export type TotalExpensesYTDWidget = AbstractWidget<
   'total-expenses-ytd-card',
   { name?: string } | null
 >;
+export type SavingsRateWidget = AbstractWidget<
+  'savings-rate-card',
+  { name?: string } | null
+>;
+export type FIProgressWidget = AbstractWidget<
+  'fi-progress-card',
+  { name?: string } | null
+>;
+export type TopMoversWidget = AbstractWidget<
+  'top-movers-card',
+  { name?: string } | null
+>;
+export type CategoryTrendWidget = AbstractWidget<
+  'category-trend-card',
+  { name?: string } | null
+>;
+export type RecurringAuditorWidget = AbstractWidget<
+  'recurring-auditor-card',
+  { name?: string } | null
+>;
+export type NetWorthCompositionWidget = AbstractWidget<
+  'net-worth-composition-card',
+  { name?: string } | null
+>;
 
 type SpecializedWidget =
   | NetWorthWidget
@@ -160,7 +184,13 @@ type SpecializedWidget =
   | YTDCategoryWidget // FINANCE FORK
   | SubscriptionsWidget // FINANCE FORK
   | TotalIncomeYTDWidget // FINANCE FORK
-  | TotalExpensesYTDWidget; // FINANCE FORK
+  | TotalExpensesYTDWidget // FINANCE FORK
+  | SavingsRateWidget // FINANCE FORK
+  | FIProgressWidget // FINANCE FORK
+  | TopMoversWidget // FINANCE FORK
+  | CategoryTrendWidget // FINANCE FORK
+  | RecurringAuditorWidget // FINANCE FORK
+  | NetWorthCompositionWidget; // FINANCE FORK
 export type DashboardWidgetEntity = SpecializedWidget | CustomReportWidget;
 export type NewDashboardWidgetEntity = Omit<
   DashboardWidgetEntity,

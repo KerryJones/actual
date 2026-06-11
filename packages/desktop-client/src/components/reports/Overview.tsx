@@ -68,12 +68,18 @@ import { FormulaCard } from './reports/FormulaCard';
 import { MarkdownCard } from './reports/MarkdownCard';
 import { MissingReportCard } from './reports/MissingReportCard';
 // FINANCE FORK: custom cards
+import { CategoryTrendCard } from './reports/CategoryTrendCard';
+import { FIProgressCard } from './reports/FIProgressCard';
 import { MonthOverMonthCard } from './reports/MonthOverMonthCard';
 import { NetWorthCard } from './reports/NetWorthCard';
+import { NetWorthCompositionCard } from './reports/NetWorthCompositionCard';
+import { RecurringAuditorCard } from './reports/RecurringAuditorCard';
 import { SankeyCard } from './reports/SankeyCard';
+import { SavingsRateCard } from './reports/SavingsRateCard';
 import { SpendingCard } from './reports/SpendingCard';
 import { SubscriptionsCard } from './reports/SubscriptionsCard';
 import { SummaryCard } from './reports/SummaryCard';
+import { TopMoversCard } from './reports/TopMoversCard';
 import { TotalExpensesYTDCard } from './reports/TotalExpensesYTDCard';
 import { TotalIncomeYTDCard } from './reports/TotalIncomeYTDCard';
 import { YTDCategoryCard } from './reports/YTDCategoryCard';
@@ -648,6 +654,30 @@ export function Overview({ dashboard }: OverviewProps) {
                               name: 'subscriptions-card' as const,
                               text: t('Monthly subscriptions'),
                             },
+                            {
+                              name: 'savings-rate-card' as const,
+                              text: t('Savings Rate'),
+                            },
+                            {
+                              name: 'fi-progress-card' as const,
+                              text: t('FI Progress'),
+                            },
+                            {
+                              name: 'top-movers-card' as const,
+                              text: t('Top Movers'),
+                            },
+                            {
+                              name: 'category-trend-card' as const,
+                              text: t('Spending by Category'),
+                            },
+                            {
+                              name: 'recurring-auditor-card' as const,
+                              text: t('Recurring Charges'),
+                            },
+                            {
+                              name: 'net-worth-composition-card' as const,
+                              text: t('Net Worth Composition'),
+                            },
                             ...(formulaMode
                               ? [
                                   {
@@ -1039,6 +1069,80 @@ export function Overview({ dashboard }: OverviewProps) {
                         ) : widget.type === 'total-expenses-ytd-card' ? (
                           <TotalExpensesYTDCard
                             isEditing={isEditing}
+                            meta={widget.meta}
+                            onMetaChange={newMeta =>
+                              onMetaChange(item, newMeta)
+                            }
+                            onRemove={() => onRemoveWidget(item.i)}
+                            onCopy={targetDashboardId =>
+                              onCopyWidget(item.i, targetDashboardId)
+                            }
+                          />
+                        ) : widget.type === 'savings-rate-card' ? (
+                          <SavingsRateCard
+                            isEditing={isEditing}
+                            meta={widget.meta}
+                            onMetaChange={newMeta =>
+                              onMetaChange(item, newMeta)
+                            }
+                            onRemove={() => onRemoveWidget(item.i)}
+                            onCopy={targetDashboardId =>
+                              onCopyWidget(item.i, targetDashboardId)
+                            }
+                          />
+                        ) : widget.type === 'fi-progress-card' ? (
+                          <FIProgressCard
+                            isEditing={isEditing}
+                            accounts={accounts}
+                            meta={widget.meta}
+                            onMetaChange={newMeta =>
+                              onMetaChange(item, newMeta)
+                            }
+                            onRemove={() => onRemoveWidget(item.i)}
+                            onCopy={targetDashboardId =>
+                              onCopyWidget(item.i, targetDashboardId)
+                            }
+                          />
+                        ) : widget.type === 'top-movers-card' ? (
+                          <TopMoversCard
+                            isEditing={isEditing}
+                            meta={widget.meta}
+                            onMetaChange={newMeta =>
+                              onMetaChange(item, newMeta)
+                            }
+                            onRemove={() => onRemoveWidget(item.i)}
+                            onCopy={targetDashboardId =>
+                              onCopyWidget(item.i, targetDashboardId)
+                            }
+                          />
+                        ) : widget.type === 'category-trend-card' ? (
+                          <CategoryTrendCard
+                            isEditing={isEditing}
+                            meta={widget.meta}
+                            onMetaChange={newMeta =>
+                              onMetaChange(item, newMeta)
+                            }
+                            onRemove={() => onRemoveWidget(item.i)}
+                            onCopy={targetDashboardId =>
+                              onCopyWidget(item.i, targetDashboardId)
+                            }
+                          />
+                        ) : widget.type === 'recurring-auditor-card' ? (
+                          <RecurringAuditorCard
+                            isEditing={isEditing}
+                            meta={widget.meta}
+                            onMetaChange={newMeta =>
+                              onMetaChange(item, newMeta)
+                            }
+                            onRemove={() => onRemoveWidget(item.i)}
+                            onCopy={targetDashboardId =>
+                              onCopyWidget(item.i, targetDashboardId)
+                            }
+                          />
+                        ) : widget.type === 'net-worth-composition-card' ? (
+                          <NetWorthCompositionCard
+                            isEditing={isEditing}
+                            accounts={accounts}
                             meta={widget.meta}
                             onMetaChange={newMeta =>
                               onMetaChange(item, newMeta)

@@ -141,7 +141,7 @@ export function SubscriptionsCard({
   );
 }
 
-type PayeesById = Record<string, { name: string } | undefined>;
+export type PayeesById = Record<string, { name: string } | undefined>;
 
 function summarizeSubscriptions(
   schedules: readonly ScheduleEntity[],

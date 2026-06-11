@@ -47,6 +47,12 @@ function isWidgetType(type: string): type is DashboardWidgetEntity['type'] {
     'subscriptions-card',
     'total-income-ytd-card',
     'total-expenses-ytd-card',
+    'savings-rate-card',
+    'fi-progress-card',
+    'top-movers-card',
+    'category-trend-card',
+    'recurring-auditor-card',
+    'net-worth-composition-card',
   ].includes(type);
 }
 
