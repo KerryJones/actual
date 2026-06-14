@@ -15,7 +15,6 @@ import { ReportCardName } from '#components/reports/ReportCardName';
 import { calculateTimeRange } from '#components/reports/reportRanges';
 import {
   GraphLayers,
-  // compactSankeyData,
   createSpreadsheet as sankeySpreadsheet,
 } from '#components/reports/spreadsheets/sankey-spreadsheet';
 import { useDashboardWidgetCopyMenu } from '#components/reports/useDashboardWidgetCopyMenu';
@@ -70,24 +69,34 @@ export function SankeyCard({
 
   const defaultLayerFrom =
     mode === 'budgeted' ? GraphLayers.IncomeCategory : GraphLayers.IncomePayee;
-  const defaultLayerTo = GraphLayers.CategoryGroup;
+  const defaultLayerTo = GraphLayers.Category;
 
   const metaLayerFrom = isGraphLayer(meta?.layerFrom)
     ? meta.layerFrom
     : undefined;
   const metaLayerTo = isGraphLayer(meta?.layerTo) ? meta.layerTo : undefined;
 
+  // Spent mode no longer emits Account-typed nodes from createTransactionsGraph,
+  // so any persisted meta.layer* === 'account' must fall back to the default —
+  // otherwise filterGraphByLayers strips every layer outside the empty Account
+  // band and the card renders blank. Same logic applies if layerFrom is pinned
+  // to IncomeCategory: filtering then drops the IncomePayee roots and the
+  // income subgraph silently disappears.
   const layerFrom =
     metaLayerFrom &&
     !(mode === 'budgeted' && metaLayerFrom === GraphLayers.IncomePayee) &&
-    !(mode === 'spent' && metaLayerFrom === GraphLayers.Budget)
+    !(mode === 'spent' && metaLayerFrom === GraphLayers.Budget) &&
+    !(mode === 'spent' && metaLayerFrom === GraphLayers.Account) &&
+    !(mode === 'spent' && metaLayerFrom === GraphLayers.IncomeCategory)
       ? metaLayerFrom
       : defaultLayerFrom;
 
   const layerTo =
     metaLayerTo &&
     !(mode === 'budgeted' && metaLayerTo === GraphLayers.IncomePayee) &&
-    !(mode === 'spent' && metaLayerTo === GraphLayers.Budget)
+    !(mode === 'spent' && metaLayerTo === GraphLayers.Budget) &&
+    !(mode === 'spent' && metaLayerTo === GraphLayers.Account) &&
+    !(mode === 'spent' && metaLayerTo === GraphLayers.IncomeCategory)
       ? metaLayerTo
       : defaultLayerTo;
 
@@ -119,8 +128,6 @@ export function SankeyCard({
     ],
   );
   const data = useReport('sankey', params);
-
-  const compactData = useMemo(() => data, [data]);
 
   const startDate = d.parseISO(start);
   const endDate = d.parseISO(end);
@@ -192,9 +199,9 @@ export function SankeyCard({
           </View>
         </View>
 
-        {compactData ? (
+        {data ? (
           <SankeyGraph
-            data={compactData}
+            data={data}
             showPercentages={meta?.showPercentages}
             showTooltip={!isEditing}
             style={{ height: 'auto', flex: 1 }}

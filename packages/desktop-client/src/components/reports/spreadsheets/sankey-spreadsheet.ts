@@ -681,83 +681,33 @@ function createTransactionsGraph(categoryData: CategoryEntry[]): Graph {
   const graph: Graph = new Map();
 
   categoryData.forEach(entry => {
-    if (entry.accountId && entry.accountName && entry.categoryId) {
-      if (entry.isIncome) {
-        // Payee > Income category > Account
-        addNode(
-          graph,
-          entry.categoryId,
-          GraphLayers.IncomeCategory,
-          entry.category,
-        );
-        addNode(graph, entry.accountId, GraphLayers.Account, entry.accountName);
-        addValueToLink(graph, entry.categoryId, entry.accountId, entry.value);
-        if (entry.payeeId) {
-          addNode(
-            graph,
-            entry.payeeId,
-            GraphLayers.IncomePayee,
-            entry.payeeName,
-          );
-          addValueToLink(graph, entry.payeeId, entry.categoryId, entry.value);
-        }
-      } else {
-        // Account > Category group > Category
-        addNode(graph, entry.accountId, GraphLayers.Account, entry.accountName);
-        addNode(
-          graph,
-          entry.categoryGroupId,
-          GraphLayers.CategoryGroup,
-          entry.categoryGroup,
-        );
-        addNode(graph, entry.categoryId, GraphLayers.Category, entry.category);
-        addValueToLink(
-          graph,
-          entry.accountId,
-          entry.categoryGroupId,
-          entry.value,
-        );
-        addValueToLink(
-          graph,
-          entry.categoryGroupId,
-          entry.categoryId,
-          entry.value,
-        );
-      }
-    }
-  });
-
-  graph.forEach((data, key) => {
-    if (
-      data.type === GraphLayers.Account &&
-      getLayer(graph, key) === 0 &&
-      nodesInLayer(graph, GraphLayers.IncomePayee).length > 0
-    ) {
-      // If an account node has no parents (i.e. money was spent from the account, but no money added in the timeframe),
-      // connect it to a synthetic node to ensure it appears in the graph at the right layer.
+    if (entry.isIncome) {
+      // Payee > Income category. Skip entries without a payee — the
+      // IncomeCategory would otherwise be added as an orphan node and dropped
+      // by cleanUpNodes, silently discarding the value.
+      if (!entry.payeeId) return;
       addNode(
         graph,
-        key + '_payee' + SpecialNodeKeys.HiddenSuffix,
-        GraphLayers.IncomePayee,
-        '',
+        entry.categoryId,
+        GraphLayers.IncomeCategory,
+        entry.category,
       );
+      addNode(graph, entry.payeeId, GraphLayers.IncomePayee, entry.payeeName);
+      addValueToLink(graph, entry.payeeId, entry.categoryId, entry.value);
+    } else {
+      // Category group > Category
       addNode(
         graph,
-        key + '_account' + SpecialNodeKeys.HiddenSuffix,
-        GraphLayers.Account,
-        '',
+        entry.categoryGroupId,
+        GraphLayers.CategoryGroup,
+        entry.categoryGroup,
       );
+      addNode(graph, entry.categoryId, GraphLayers.Category, entry.category);
       addValueToLink(
         graph,
-        key + '_payee' + SpecialNodeKeys.HiddenSuffix,
-        key + '_account' + SpecialNodeKeys.HiddenSuffix,
-        -1,
-      );
-      addValueToLink(
-        graph,
-        key + '_account' + SpecialNodeKeys.HiddenSuffix,
-        key,
-        -1,
+        entry.categoryGroupId,
+        entry.categoryId,
+        entry.value,
       );
     }
   });
@@ -1182,7 +1132,7 @@ function filterGraphByLayers(
   const fromIndex = layerIndices.get(layerFrom);
   const toIndex = layerIndices.get(layerTo);
 
-  if (fromIndex && toIndex) {
+  if (fromIndex !== undefined && toIndex !== undefined) {
     const keysToDelete: NodeKey[] = [];
     graph.forEach((data, key) => {
       const nodeLayerIndex = layerIndices.get(data.type);
@@ -1193,7 +1143,19 @@ function filterGraphByLayers(
       }
     });
 
+    const deletedKeys = new Set(keysToDelete);
     keysToDelete.forEach(key => graph.delete(key));
+    // Prune dangling outgoing links that pointed at deleted nodes — otherwise
+    // convertToSankeyData would emit links with target index -1. Use the same
+    // collect-then-delete pattern as the node sweep above so the iterator is
+    // never mutated mid-walk.
+    graph.forEach(data => {
+      const targetsToDelete: NodeKey[] = [];
+      for (const target of data.to.keys()) {
+        if (deletedKeys.has(target)) targetsToDelete.push(target);
+      }
+      targetsToDelete.forEach(t => data.to.delete(t));
+    });
   }
 }
 
