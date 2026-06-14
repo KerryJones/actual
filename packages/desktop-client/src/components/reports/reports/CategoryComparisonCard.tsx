@@ -83,7 +83,7 @@ export function CategoryComparisonCard({
         }
       }}
     >
-      <View style={{ flex: 1, padding: 20 }}>
+      <View style={{ flex: 1, padding: 20, overflow: 'hidden' }}>
         <ReportCardName
           name={meta?.name || defaultName}
           isEditing={nameMenuOpen}

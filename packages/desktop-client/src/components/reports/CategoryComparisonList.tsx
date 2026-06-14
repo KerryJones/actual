@@ -53,7 +53,7 @@ export function CategoryComparisonList({
   );
 
   return (
-    <View style={{ marginTop: 8, gap: 10 }}>
+    <View style={{ marginTop: 8, gap: 6 }}>
       {rows.map(row => {
         // delta < 0 means current is more negative → spent more this window
         const delta = row.currentTotal - row.previousTotal;
@@ -63,7 +63,7 @@ export function CategoryComparisonList({
           ? theme.reportsNumberNegative
           : theme.reportsNumberPositive;
         return (
-          <View key={row.category} style={{ gap: 2 }}>
+          <View key={row.category} style={{ gap: 4, flexShrink: 0 }}>
             <View
               style={{
                 flexDirection: 'row',

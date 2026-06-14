@@ -178,7 +178,7 @@ function MoverColumn({
         </Block>
       ) : (
         rows.map(row => (
-          <View key={row.category} style={{ gap: 2 }}>
+          <View key={row.category} style={{ gap: 4, flexShrink: 0 }}>
             <View
               style={{
                 flexDirection: 'row',
