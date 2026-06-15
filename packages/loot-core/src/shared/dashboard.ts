@@ -1,260 +1,122 @@
+// FINANCE FORK: dashboard defaults rebuilt to spec — KPI strip, full-width
+// Sankey, paired analytics rows, and a final list row. 12-col grid, rowHeight 100.
 import type { NewDashboardWidgetEntity } from '#types/models';
 
+type WidgetType = NewDashboardWidgetEntity['type'];
+
+export const KPI_WIDGET_TYPES: Set<WidgetType> = new Set([
+  'total-income-ytd-card',
+  'total-expenses-ytd-card',
+  'savings-rate-card',
+  'fi-progress-card',
+  'summary-card',
+]);
+
+export const WIDGET_DEFAULT_SIZE: Record<
+  WidgetType,
+  { width: number; height: number }
+> = {
+  // KPI strip — single-row hero numbers
+  'total-income-ytd-card': { width: 3, height: 1 },
+  'total-expenses-ytd-card': { width: 3, height: 1 },
+  'savings-rate-card': { width: 3, height: 1 },
+  'fi-progress-card': { width: 3, height: 1 },
+  'summary-card': { width: 3, height: 1 },
+  // Formula — small but tall enough for header + dynamic-font hero
+  'formula-card': { width: 3, height: 2 },
+  // Sankey — full width, tall
+  'sankey-card': { width: 12, height: 4 },
+  // Lists — third-width
+  'top-movers-card': { width: 4, height: 3 },
+  'recurring-auditor-card': { width: 4, height: 3 },
+  'month-over-month-card': { width: 4, height: 3 },
+  'subscriptions-card': { width: 4, height: 3 },
+  'markdown-card': { width: 4, height: 3 },
+  // Charts — half-width
+  'net-worth-card': { width: 6, height: 3 },
+  'net-worth-composition-card': { width: 6, height: 3 },
+  'category-trend-card': { width: 6, height: 3 },
+  'calendar-card': { width: 6, height: 3 },
+  'cash-flow-card': { width: 6, height: 3 },
+  'spending-card': { width: 6, height: 3 },
+  'budget-analysis-card': { width: 6, height: 3 },
+  'crossover-card': { width: 6, height: 3 },
+  'age-of-money-card': { width: 6, height: 3 },
+  'ytd-category-card': { width: 6, height: 3 },
+  'balance-forecast-card': { width: 6, height: 3 },
+  'custom-report': { width: 6, height: 3 },
+};
+
 export const DEFAULT_DASHBOARD_STATE: NewDashboardWidgetEntity[] = [
-  // Top row: Key metrics at a glance
+  // Row 0 (h=1): KPI strip
   {
-    type: 'summary-card',
+    type: 'total-income-ytd-card',
     width: 3,
-    height: 2,
+    height: 1,
     x: 0,
     y: 0,
-    meta: {
-      name: 'Total Income (YTD)',
-      content: JSON.stringify({
-        type: 'sum',
-        fontSize: 20,
-      }),
-      timeFrame: {
-        start: '2024-01-01',
-        end: '2024-12-31',
-        mode: 'yearToDate',
-      },
-      conditions: [
-        {
-          field: 'amount',
-          op: 'gt',
-          value: 0,
-        },
-        {
-          field: 'account',
-          op: 'onBudget',
-          value: '',
-        },
-        {
-          field: 'transfer',
-          op: 'is',
-          value: false,
-        },
-      ],
-      conditionsOp: 'and',
-    },
+    meta: null,
   },
   {
-    type: 'summary-card',
+    type: 'total-expenses-ytd-card',
     width: 3,
-    height: 2,
+    height: 1,
     x: 3,
     y: 0,
-    meta: {
-      name: 'Total Expenses (YTD)',
-      content: JSON.stringify({
-        type: 'sum',
-        fontSize: 20,
-      }),
-      timeFrame: {
-        start: '2024-01-01',
-        end: '2024-12-31',
-        mode: 'yearToDate',
-      },
-      conditions: [
-        {
-          field: 'amount',
-          op: 'lt',
-          value: 0,
-        },
-        {
-          field: 'account',
-          op: 'onBudget',
-          value: '',
-        },
-        {
-          field: 'transfer',
-          op: 'is',
-          value: false,
-        },
-      ],
-      conditionsOp: 'and',
-    },
-  },
-  {
-    type: 'summary-card',
-    width: 3,
-    height: 2,
-    x: 6,
-    y: 0,
-    meta: {
-      name: 'Avg Per Month',
-      content: JSON.stringify({
-        type: 'avgPerMonth',
-        fontSize: 20,
-      }),
-      timeFrame: {
-        start: '2024-01-01',
-        end: '2024-12-31',
-        mode: 'yearToDate',
-      },
-      conditions: [
-        {
-          field: 'amount',
-          op: 'lt',
-          value: 0,
-        },
-        {
-          field: 'account',
-          op: 'onBudget',
-          value: '',
-        },
-        {
-          field: 'transfer',
-          op: 'is',
-          value: false,
-        },
-      ],
-      conditionsOp: 'and',
-    },
-  },
-  {
-    type: 'summary-card',
-    width: 3,
-    height: 2,
-    x: 9,
-    y: 0,
-    meta: {
-      name: 'Avg Per Transaction',
-      content: JSON.stringify({
-        type: 'avgPerTransact',
-        fontSize: 20,
-      }),
-      timeFrame: {
-        start: '2024-01-01',
-        end: '2024-12-31',
-        mode: 'yearToDate',
-      },
-      conditions: [
-        {
-          field: 'amount',
-          op: 'lt',
-          value: 0,
-        },
-        {
-          field: 'account',
-          op: 'onBudget',
-          value: '',
-        },
-        {
-          field: 'transfer',
-          op: 'is',
-          value: false,
-        },
-      ],
-      conditionsOp: 'and',
-    },
-  },
-  // Second row: Net worth and cash flow side by side
-  {
-    type: 'net-worth-card',
-    width: 6,
-    height: 2,
-    x: 0,
-    y: 2,
     meta: null,
   },
+  { type: 'savings-rate-card', width: 3, height: 1, x: 6, y: 0, meta: null },
+  { type: 'fi-progress-card', width: 3, height: 1, x: 9, y: 0, meta: null },
+
+  // Row 1–4 (h=4): Sankey, full width
+  { type: 'sankey-card', width: 12, height: 4, x: 0, y: 1, meta: null },
+
+  // Row 5–7 (h=3): Net Worth · Net Worth Composition
+  { type: 'net-worth-card', width: 6, height: 3, x: 0, y: 5, meta: null },
   {
-    type: 'cash-flow-card',
+    type: 'net-worth-composition-card',
     width: 6,
-    height: 2,
+    height: 3,
     x: 6,
-    y: 2,
+    y: 5,
     meta: null,
   },
-  // Third row: Spending comparisons
-  {
-    type: 'spending-card',
-    width: 4,
-    height: 2,
-    x: 0,
-    y: 5,
-    meta: {
-      name: 'This Month',
-      mode: 'single-month',
-    },
-  },
-  {
-    type: 'spending-card',
-    width: 4,
-    height: 2,
-    x: 4,
-    y: 5,
-    meta: {
-      name: 'Budget Overview',
-      mode: 'budget',
-    },
-  },
-  {
-    type: 'spending-card',
-    width: 4,
-    height: 2,
-    x: 8,
-    y: 5,
-    meta: {
-      name: '3-Month Average',
-      mode: 'average',
-    },
-  },
-  // Fourth row: Calendar and savings rate
+
+  // Row 8–10 (h=3): Spending by Category · Calendar
+  { type: 'category-trend-card', width: 6, height: 3, x: 0, y: 8, meta: null },
   {
     type: 'calendar-card',
-    width: 8,
-    height: 4,
-    x: 0,
+    width: 6,
+    height: 3,
+    x: 6,
     y: 8,
     meta: {
-      name: 'Transaction Calendar',
       timeFrame: {
-        start: '2024-01-01',
-        end: '2024-03-31',
+        start: '2026-01-01',
+        end: '2026-03-31',
         mode: 'sliding-window',
       },
-      conditions: [
-        {
-          field: 'transfer',
-          op: 'is',
-          value: false,
-        },
-      ],
+      conditions: [{ field: 'transfer', op: 'is', value: false }],
       conditionsOp: 'and',
     },
   },
+
+  // Row 11–13 (h=3): Top Movers · Recurring Charges · Month over Month
+  { type: 'top-movers-card', width: 4, height: 3, x: 0, y: 11, meta: null },
   {
-    type: 'summary-card',
+    type: 'recurring-auditor-card',
     width: 4,
-    height: 2,
-    x: 8,
-    y: 8,
-    meta: {
-      name: 'Recent Net Worth Change',
-      content: JSON.stringify({
-        type: 'sum',
-        fontSize: 32,
-      }),
-      timeFrame: {
-        start: '2024-01-01',
-        end: '2024-03-31',
-        mode: 'sliding-window',
-      },
-      conditions: [],
-      conditionsOp: 'and',
-    },
+    height: 3,
+    x: 4,
+    y: 11,
+    meta: null,
   },
   {
-    type: 'markdown-card',
+    type: 'month-over-month-card',
     width: 4,
-    height: 2,
+    height: 3,
     x: 8,
-    y: 10,
-    meta: {
-      content:
-        '## Dashboard Tips\n\nYou can add new widgets or edit existing widgets by using the buttons at the top of the page. Choose a widget type and customize it to fit your needs.\n\n**Moving cards:** Drag any card by its header to reposition it.\n\n**Deleting cards:** Click the three-dot menu on any card and select "Remove".',
-    },
+    y: 11,
+    meta: null,
   },
 ];

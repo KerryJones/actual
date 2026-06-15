@@ -14,6 +14,10 @@ import { Menu } from '@actual-app/components/menu';
 import { Popover } from '@actual-app/components/popover';
 import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
+import {
+  KPI_WIDGET_TYPES,
+  WIDGET_DEFAULT_SIZE,
+} from '@actual-app/core/shared/dashboard';
 import type {
   CustomReportWidget,
   DashboardPageEntity,
@@ -184,7 +188,11 @@ export function Overview({ dashboard }: OverviewProps) {
       minW:
         isCustomReportWidget(widget) || widget.type === 'markdown-card' ? 2 : 3,
       minH:
-        isCustomReportWidget(widget) || widget.type === 'markdown-card' ? 1 : 2,
+        isCustomReportWidget(widget) ||
+        widget.type === 'markdown-card' ||
+        KPI_WIDGET_TYPES.has(widget.type)
+          ? 1
+          : 2,
     }));
   }, [widgets]);
 
@@ -282,11 +290,12 @@ export function Overview({ dashboard }: OverviewProps) {
     type: T['type'],
     meta: T['meta'] = null,
   ) => {
+    const size = WIDGET_DEFAULT_SIZE[type] ?? { width: 4, height: 2 };
     addDashboardWidgetMutation.mutate({
       widget: {
         type,
-        width: 4,
-        height: 2,
+        width: size.width,
+        height: size.height,
         meta,
         dashboard_page_id: dashboard.id,
       },
