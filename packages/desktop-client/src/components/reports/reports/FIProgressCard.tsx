@@ -90,10 +90,9 @@ export function FIProgressCard({
             onClose={() => setNameMenuOpen(false)}
           />
           {data ? (
-            <Block style={{ color: theme.pageTextSubdued }}>
+            <Block style={{ color: theme.pageTextSubdued, fontSize: 13 }}>
               <PrivacyFilter>
-                {t('{{annual}} expenses × 25 = {{target}} target', {
-                  annual: format(data.annualExpense, 'financial'),
+                {t('of {{target}} FI target', {
                   target: format(data.fiTarget, 'financial'),
                 })}
               </PrivacyFilter>
@@ -110,9 +109,8 @@ export function FIProgressCard({
         >
           {data ? (
             <SummaryNumber
-              value={data.progress * 100}
-              contentType="percentage"
-              suffix="%"
+              value={data.netWorth}
+              contentType="sum"
               loading={false}
             />
           ) : (
@@ -127,7 +125,26 @@ export function FIProgressCard({
               paddingBottom: 16,
             }}
           >
-            <ProgressBar percent={barPct} color={theme.reportsBlue} />
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <Block
+                style={{
+                  color: theme.pageTextSubdued,
+                  fontSize: 12,
+                  minWidth: 36,
+                }}
+              >
+                {`${Math.round(data.progress * 100)}%`}
+              </Block>
+              <View style={{ flex: 1 }}>
+                <ProgressBar percent={barPct} color={theme.reportsBlue} />
+              </View>
+            </View>
           </View>
         )}
       </View>
