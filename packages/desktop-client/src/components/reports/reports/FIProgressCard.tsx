@@ -54,6 +54,9 @@ export function FIProgressCard({
   const data = useReport<FIProgressData>('fi-progress', getData);
 
   const barPct = data ? Math.min(100, Math.max(0, data.progress * 100)) : 0;
+  const remainingTarget = data ? Math.max(0, data.fiTarget - data.netWorth) : 0;
+  const yearsRemaining =
+    data && data.annualNet > 0 ? remainingTarget / data.annualNet : null;
 
   return (
     <ReportCard
@@ -90,13 +93,24 @@ export function FIProgressCard({
             onClose={() => setNameMenuOpen(false)}
           />
           {data ? (
-            <Block style={{ color: theme.pageTextSubdued, fontSize: 13 }}>
-              <PrivacyFilter>
-                {t('of {{target}} FI target', {
-                  target: format(data.fiTarget, 'financial'),
-                })}
-              </PrivacyFilter>
-            </Block>
+            <>
+              <Block style={{ color: theme.pageTextSubdued, fontSize: 13 }}>
+                <PrivacyFilter>
+                  {t('of {{target}} FI target', {
+                    target: format(data.fiTarget, 'financial'),
+                  })}
+                </PrivacyFilter>
+              </Block>
+              {yearsRemaining != null ? (
+                <Block style={{ color: theme.pageTextSubdued, fontSize: 12 }}>
+                  <PrivacyFilter>
+                    {t('{{years}} years at current pace', {
+                      years: yearsRemaining.toFixed(1),
+                    })}
+                  </PrivacyFilter>
+                </Block>
+              ) : null}
+            </>
           ) : null}
         </View>
         <View

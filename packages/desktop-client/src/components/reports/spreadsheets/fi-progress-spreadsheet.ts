@@ -13,6 +13,10 @@ export type FIProgressData = {
   netWorth: number;
   /** Trailing-12-month expense in cents (positive). */
   annualExpense: number;
+  /** Trailing-12-month income in cents (positive). */
+  annualIncome: number;
+  /** Trailing-12-month net (income - expense) in cents. May be negative. */
+  annualNet: number;
   /** 25 * annualExpense in cents. */
   fiTarget: number;
   /** 0..(no upper bound) — fraction of FI achieved. */
@@ -52,6 +56,19 @@ async function queryAnnualExpense(
   return -sum;
 }
 
+async function queryAnnualIncome(
+  start: string,
+  end: string,
+): Promise<number> {
+  const { data } = await aqlQuery(
+    q('transactions')
+      .filter(buildFlowFilter(start, end, 'income'))
+      .select([{ amount: { $sum: '$amount' } }]),
+  );
+  const sum = (data as { amount: number }[])[0]?.amount ?? 0;
+  return sum;
+}
+
 export function createFIProgressSpreadsheet(accounts: AccountEntity[]) {
   return async (
     _spreadsheet: ReturnType<typeof useSpreadsheet>,
@@ -62,14 +79,25 @@ export function createFIProgressSpreadsheet(accounts: AccountEntity[]) {
     const start = startMonth + '-01';
     const accountIds = accounts.map(a => a.id);
 
-    const [netWorth, annualExpense] = await Promise.all([
+    const [netWorth, annualExpense, annualIncome] = await Promise.all([
       queryNetWorth(accountIds, end),
       queryAnnualExpense(start, end),
+      queryAnnualIncome(start, end),
     ]);
 
     const fiTarget = annualExpense * 25;
     const progress = fiTarget > 0 ? netWorth / fiTarget : 0;
+    const annualNet = annualIncome - annualExpense;
 
-    setData({ netWorth, annualExpense, fiTarget, progress, start, end });
+    setData({
+      netWorth,
+      annualExpense,
+      annualIncome,
+      annualNet,
+      fiTarget,
+      progress,
+      start,
+      end,
+    });
   };
 }

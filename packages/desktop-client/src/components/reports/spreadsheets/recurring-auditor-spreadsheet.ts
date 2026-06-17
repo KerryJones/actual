@@ -11,6 +11,8 @@ export type RecurringRow = {
   payee: string;
   count: number;
   cadence: RecurringCadence;
+  /** Mean per-charge amount in positive cents (pre-cadence-normalization). */
+  meanCharge: number;
   /** Normalized to monthly equivalent, positive cents. */
   monthlyCost: number;
   /** monthlyCost * 12, positive cents. */
@@ -23,6 +25,8 @@ export type RecurringAuditorData = {
   /** Number of transactions inspected. */
   transactionsInspected: number;
   rows: RecurringRow[];
+  /** Sum of charges projected to hit in the next 30 days, positive cents. */
+  next30DaysTotal: number;
 };
 
 type TxnRow = {
@@ -41,6 +45,12 @@ const CADENCE_MULTIPLIER: Record<RecurringCadence, number> = {
   monthly: 1,
   quarterly: 1 / 3,
   yearly: 1 / 12,
+};
+
+const CADENCE_DAYS: Record<RecurringCadence, number> = {
+  monthly: 30,
+  quarterly: 91,
+  yearly: 365,
 };
 
 const MIN_OCCURRENCES = 3;
@@ -131,11 +141,13 @@ export const getRecurringAuditorData = async (
     const cadence = classifyCadence(medianGap);
     if (!cadence) continue;
 
+    const meanCharge = Math.round(mean);
     const monthlyCost = Math.round(mean * CADENCE_MULTIPLIER[cadence]);
     rows.push({
       payee,
       count: txns.length,
       cadence,
+      meanCharge,
       monthlyCost,
       annualCost: monthlyCost * 12,
       lastCharged: txns[txns.length - 1].date,
@@ -144,8 +156,29 @@ export const getRecurringAuditorData = async (
 
   rows.sort((a, b) => b.annualCost - a.annualCost);
 
+  // Project the next-30-days total: include any recurring row whose next
+  // expected charge falls in [today, today+30]. Overdue charges (lastCharged
+  // older than the cadence) are treated as "due immediately" — they almost
+  // always hit within 30 days as the sync catches up, and silently dropping
+  // them under-reports upcoming spend. Future-dated lastCharged (scheduled
+  // transactions pre-entered) clamp the projected next charge to today.
+  const today = monthUtils.currentDay();
+  let next30DaysTotal = 0;
+  for (const row of rows) {
+    const cadenceDays = CADENCE_DAYS[row.cadence];
+    const daysSinceLast = monthUtils.differenceInCalendarDays(
+      today,
+      row.lastCharged,
+    );
+    const daysUntilNext = Math.max(0, cadenceDays - daysSinceLast);
+    if (daysUntilNext <= 30) {
+      next30DaysTotal += row.meanCharge;
+    }
+  }
+
   setData({
     transactionsInspected: transactions.length,
     rows,
+    next30DaysTotal,
   });
 };

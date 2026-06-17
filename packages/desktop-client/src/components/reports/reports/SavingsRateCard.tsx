@@ -2,10 +2,12 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Block } from '@actual-app/components/block';
 import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
 import type { SavingsRateWidget } from '@actual-app/core/types/models';
 
+import { PrivacyFilter } from '#components/PrivacyFilter';
 import { CompactAreaChart } from '#components/reports/charts/CompactAreaChart';
 import { DateRange } from '#components/reports/DateRange';
 import { LoadingIndicator } from '#components/reports/LoadingIndicator';
@@ -104,6 +106,27 @@ export function SavingsRateCard({
             <LoadingIndicator />
           )}
         </View>
+        {data && (
+          <View
+            style={{
+              paddingLeft: 20,
+              paddingRight: 20,
+              paddingTop: 4,
+            }}
+          >
+            <Block
+              style={{
+                color: theme.pageTextSubdued,
+                fontSize: 12,
+                textAlign: 'center',
+              }}
+            >
+              <PrivacyFilter>
+                {`${Math.round(data.ytdRate * 100)}% YTD`}
+              </PrivacyFilter>
+            </Block>
+          </View>
+        )}
         {data && data.months.length > 1 && (
           <View
             style={{

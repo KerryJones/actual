@@ -53,6 +53,10 @@ function isWidgetType(type: string): type is DashboardWidgetEntity['type'] {
     'category-trend-card',
     'recurring-auditor-card',
     'net-worth-composition-card',
+    'net-worth-hero-card',
+    'top-categories-card',
+    'net-worth-trend-card',
+    'income-expense-trend-card',
   ].includes(type);
 }
 

@@ -166,6 +166,22 @@ export type NetWorthCompositionWidget = AbstractWidget<
   'net-worth-composition-card',
   { name?: string } | null
 >;
+export type NetWorthHeroWidget = AbstractWidget<
+  'net-worth-hero-card',
+  { name?: string } | null
+>;
+export type TopCategoriesWidget = AbstractWidget<
+  'top-categories-card',
+  { name?: string } | null
+>;
+export type NetWorthTrendWidget = AbstractWidget<
+  'net-worth-trend-card',
+  { name?: string } | null
+>;
+export type IncomeExpenseTrendWidget = AbstractWidget<
+  'income-expense-trend-card',
+  { name?: string } | null
+>;
 
 type SpecializedWidget =
   | NetWorthWidget
@@ -190,7 +206,11 @@ type SpecializedWidget =
   | TopMoversWidget // FINANCE FORK
   | CategoryTrendWidget // FINANCE FORK
   | RecurringAuditorWidget // FINANCE FORK
-  | NetWorthCompositionWidget; // FINANCE FORK
+  | NetWorthCompositionWidget // FINANCE FORK
+  | NetWorthHeroWidget // FINANCE FORK
+  | TopCategoriesWidget // FINANCE FORK
+  | NetWorthTrendWidget // FINANCE FORK
+  | IncomeExpenseTrendWidget; // FINANCE FORK
 export type DashboardWidgetEntity = SpecializedWidget | CustomReportWidget;
 export type NewDashboardWidgetEntity = Omit<
   DashboardWidgetEntity,

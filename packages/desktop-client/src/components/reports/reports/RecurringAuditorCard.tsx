@@ -43,6 +43,7 @@ export function RecurringAuditorCard({
   onCopy,
 }: RecurringAuditorCardProps) {
   const { t } = useTranslation();
+  const format = useFormat();
   const [nameMenuOpen, setNameMenuOpen] = useState(false);
   const { menuItems: copyMenuItems, handleMenuSelect: handleCopyMenuSelect } =
     useDashboardWidgetCopyMenu(onCopy);
@@ -88,11 +89,28 @@ export function RecurringAuditorCard({
             onClose={() => setNameMenuOpen(false)}
           />
           {data ? (
-            <Block style={{ color: theme.pageTextSubdued }}>
-              {t('Auto-detected from {{count}} transactions', {
-                count: data.transactionsInspected,
-              })}
-            </Block>
+            <>
+              <Block
+                style={{
+                  color: theme.pageText,
+                  fontSize: 13,
+                  fontWeight: 500,
+                }}
+              >
+                <PrivacyFilter>
+                  {t('Next 30 days: {{amount}}', {
+                    amount: format(data.next30DaysTotal, 'financial'),
+                  })}
+                </PrivacyFilter>
+              </Block>
+              <Block
+                style={{ color: theme.pageTextSubdued, fontSize: 12 }}
+              >
+                {t('Auto-detected from {{count}} transactions', {
+                  count: data.transactionsInspected,
+                })}
+              </Block>
+            </>
           ) : null}
         </View>
         <View

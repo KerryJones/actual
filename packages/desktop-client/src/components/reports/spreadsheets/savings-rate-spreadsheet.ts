@@ -24,6 +24,8 @@ export type SavingsRateData = {
   months: SavingsRatePoint[];
   /** Trailing-12-month aggregate rate, in -1..1 */
   trailingRate: number;
+  /** Year-to-date aggregate rate, in -1..1 */
+  ytdRate: number;
 };
 
 type MonthRow = { month: string; amount: number };
@@ -78,5 +80,15 @@ export const getSavingsRateData = async (
     totalIncome > 0
       ? Math.max(-1, Math.min(1, (totalIncome - totalExpense) / totalIncome))
       : 0;
-  setData({ start, end, months, trailingRate });
+
+  const ytdPrefix = currentMonth.slice(0, 4) + '-';
+  const ytdMonths = months.filter(m => m.month.startsWith(ytdPrefix));
+  const ytdIncome = ytdMonths.reduce((a, m) => a + m.income, 0);
+  const ytdExpense = ytdMonths.reduce((a, m) => a + m.expense, 0);
+  const ytdRate =
+    ytdIncome > 0
+      ? Math.max(-1, Math.min(1, (ytdIncome - ytdExpense) / ytdIncome))
+      : 0;
+
+  setData({ start, end, months, trailingRate, ytdRate });
 };

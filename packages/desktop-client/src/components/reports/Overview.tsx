@@ -74,15 +74,19 @@ import { MissingReportCard } from './reports/MissingReportCard';
 // FINANCE FORK: custom cards
 import { CategoryTrendCard } from './reports/CategoryTrendCard';
 import { FIProgressCard } from './reports/FIProgressCard';
+import { IncomeExpenseTrendCard } from './reports/IncomeExpenseTrendCard';
 import { MonthOverMonthCard } from './reports/MonthOverMonthCard';
 import { NetWorthCard } from './reports/NetWorthCard';
 import { NetWorthCompositionCard } from './reports/NetWorthCompositionCard';
+import { NetWorthHeroCard } from './reports/NetWorthHeroCard';
+import { NetWorthTrendCard } from './reports/NetWorthTrendCard';
 import { RecurringAuditorCard } from './reports/RecurringAuditorCard';
 import { SankeyCard } from './reports/SankeyCard';
 import { SavingsRateCard } from './reports/SavingsRateCard';
 import { SpendingCard } from './reports/SpendingCard';
 import { SubscriptionsCard } from './reports/SubscriptionsCard';
 import { SummaryCard } from './reports/SummaryCard';
+import { TopCategoriesCard } from './reports/TopCategoriesCard';
 import { TopMoversCard } from './reports/TopMoversCard';
 import { TotalExpensesYTDCard } from './reports/TotalExpensesYTDCard';
 import { TotalIncomeYTDCard } from './reports/TotalIncomeYTDCard';
@@ -644,6 +648,22 @@ export function Overview({ dashboard }: OverviewProps) {
                             },
                             // FINANCE FORK: custom widget add-menu entries
                             {
+                              name: 'net-worth-hero-card' as const,
+                              text: t('Net Worth (hero)'),
+                            },
+                            {
+                              name: 'net-worth-trend-card' as const,
+                              text: t('Net Worth Trend'),
+                            },
+                            {
+                              name: 'income-expense-trend-card' as const,
+                              text: t('Income vs Expense'),
+                            },
+                            {
+                              name: 'top-categories-card' as const,
+                              text: t('Top Categories'),
+                            },
+                            {
                               name: 'total-income-ytd-card' as const,
                               text: t('Total Income (YTD)'),
                             },
@@ -652,16 +672,8 @@ export function Overview({ dashboard }: OverviewProps) {
                               text: t('Total Expenses (YTD)'),
                             },
                             {
-                              name: 'month-over-month-card' as const,
-                              text: t('Month over month'),
-                            },
-                            {
                               name: 'ytd-category-card' as const,
                               text: t('Year to date'),
-                            },
-                            {
-                              name: 'subscriptions-card' as const,
-                              text: t('Monthly subscriptions'),
                             },
                             {
                               name: 'savings-rate-card' as const,
@@ -1152,6 +1164,54 @@ export function Overview({ dashboard }: OverviewProps) {
                           <NetWorthCompositionCard
                             isEditing={isEditing}
                             accounts={accounts}
+                            meta={widget.meta}
+                            onMetaChange={newMeta =>
+                              onMetaChange(item, newMeta)
+                            }
+                            onRemove={() => onRemoveWidget(item.i)}
+                            onCopy={targetDashboardId =>
+                              onCopyWidget(item.i, targetDashboardId)
+                            }
+                          />
+                        ) : widget.type === 'net-worth-hero-card' ? (
+                          <NetWorthHeroCard
+                            isEditing={isEditing}
+                            meta={widget.meta}
+                            onMetaChange={newMeta =>
+                              onMetaChange(item, newMeta)
+                            }
+                            onRemove={() => onRemoveWidget(item.i)}
+                            onCopy={targetDashboardId =>
+                              onCopyWidget(item.i, targetDashboardId)
+                            }
+                          />
+                        ) : widget.type === 'top-categories-card' ? (
+                          <TopCategoriesCard
+                            isEditing={isEditing}
+                            meta={widget.meta}
+                            onMetaChange={newMeta =>
+                              onMetaChange(item, newMeta)
+                            }
+                            onRemove={() => onRemoveWidget(item.i)}
+                            onCopy={targetDashboardId =>
+                              onCopyWidget(item.i, targetDashboardId)
+                            }
+                          />
+                        ) : widget.type === 'net-worth-trend-card' ? (
+                          <NetWorthTrendCard
+                            isEditing={isEditing}
+                            meta={widget.meta}
+                            onMetaChange={newMeta =>
+                              onMetaChange(item, newMeta)
+                            }
+                            onRemove={() => onRemoveWidget(item.i)}
+                            onCopy={targetDashboardId =>
+                              onCopyWidget(item.i, targetDashboardId)
+                            }
+                          />
+                        ) : widget.type === 'income-expense-trend-card' ? (
+                          <IncomeExpenseTrendCard
+                            isEditing={isEditing}
                             meta={widget.meta}
                             onMetaChange={newMeta =>
                               onMetaChange(item, newMeta)
