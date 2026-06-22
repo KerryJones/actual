@@ -304,6 +304,7 @@ export type SankeyWidget = AbstractWidget<
     topNcategories?: number;
     categorySort?: 'per-group' | 'global' | 'budget-order';
     showPercentages?: boolean;
+    includeTransfers?: boolean;
     layerFrom?: string;
     layerTo?: string;
   } | null

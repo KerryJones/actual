@@ -111,6 +111,11 @@ const SpecialNodeKeys = {
 type SpecialNodeKeys = (typeof SpecialNodeKeys)[keyof typeof SpecialNodeKeys];
 
 export const GraphLayers = {
+  // Synthetic single-source root used by the overview-card 2-tier view
+  // (Income → CategoryGroups). The drill-down does not expose this layer in
+  // its selector; it is only produced when a caller asks for it via
+  // layerFrom === Income.
+  Income: 'income_root',
   IncomePayee: 'payee',
   IncomeCategory: 'income_category',
   Account: 'account',
@@ -121,6 +126,7 @@ export const GraphLayers = {
 export type GraphLayers = (typeof GraphLayers)[keyof typeof GraphLayers];
 
 export const GRAPH_LAYER_ORDER = [
+  GraphLayers.Income,
   GraphLayers.IncomePayee,
   GraphLayers.IncomeCategory,
   GraphLayers.Account,
@@ -128,6 +134,11 @@ export const GRAPH_LAYER_ORDER = [
   GraphLayers.CategoryGroup,
   GraphLayers.Category,
 ] as const;
+
+const INCOME_ROOT_KEY = GraphLayers.Income;
+const INCOME_ROOT_OTHER_KEY = `${INCOME_ROOT_KEY}${SpecialNodeKeys.OtherSuffix}`;
+const DEFAULT_CARD_GROUP_CAP = 6;
+const MIN_LAYER_PERCENT = 0.005;
 
 function isGraphLayer(value: unknown): value is GraphLayers {
   return (
@@ -147,6 +158,8 @@ export function createSpreadsheet(
   categorySort: SortMode = 'per-group',
   layerFrom: GraphLayers,
   layerTo: GraphLayers,
+  includeTransfers: boolean = false,
+  cardSourceGroupCap: number = DEFAULT_CARD_GROUP_CAP,
 ) {
   return async (
     spreadsheet: ReturnType<typeof useSpreadsheet>,
@@ -168,6 +181,7 @@ export function createSpreadsheet(
         categories,
         conditions,
         conditionsOp,
+        includeTransfers,
       )();
     }
     processGraphData(
@@ -178,6 +192,7 @@ export function createSpreadsheet(
       setData,
       layerFrom,
       layerTo,
+      cardSourceGroupCap,
       aggregated,
     );
   };
@@ -303,6 +318,7 @@ export function createTransactionsSpreadsheet(
   categories: CategoryGroupEntity[],
   conditions: RuleConditionEntity[] = [],
   conditionsOp: 'and' | 'or' = 'and',
+  includeTransfers: boolean = false,
 ) {
   return async () => {
     // gather filters user has set
@@ -317,6 +333,7 @@ export function createTransactionsSpreadsheet(
       filters,
       start,
       end,
+      includeTransfers,
     );
 
     return categoryData;
@@ -331,13 +348,22 @@ function processGraphData(
   setData: (data: ReturnType<typeof convertToSankeyData>) => void,
   layerFrom: GraphLayers,
   layerTo: GraphLayers,
+  cardSourceGroupCap: number,
   aggregated?: AggregatedBudget,
 ) {
   let graph: Graph;
   if (aggregated) {
     graph = createBudgetGraph(categoryData, aggregated);
   } else {
-    graph = createTransactionsGraph(categoryData);
+    // The card-level 2-tier view collapses all income into a synthetic root
+    // node and emits one outgoing link per CategoryGroup. Detected by
+    // layerFrom — the drill-down never selects this layer.
+    const synthesizeIncomeRoot = layerFrom === GraphLayers.Income;
+    graph = createTransactionsGraph(
+      categoryData,
+      synthesizeIncomeRoot,
+      cardSourceGroupCap,
+    );
   }
   groupOtherCategories(graph, topNcategories, categorySort);
   const sortedGraph = sortGraph(graph, categorySort, categories);
@@ -453,7 +479,19 @@ async function fetchCategoryData(
   filters: unknown[] = [],
   start: string,
   end: string,
+  includeTransfers: boolean = false,
 ): Promise<CategoryEntry[]> {
+  // Data hygiene: exclude account-init seed rows (Starting Balance) and
+  // account-to-account transfers. These dominate by magnitude but are not
+  // real income or expense — they are account plumbing. Drill-down can opt
+  // back in via the Include transfers toggle.
+  const transferExclusionFilters: Record<string, unknown>[] = includeTransfers
+    ? []
+    : [
+        { starting_balance_flag: { $ne: true } },
+        { 'payee.transfer_acct': null },
+      ];
+
   const nested = await Promise.all(
     categoryGroups.map(async (categoryGroup: CategoryGroupEntity) => {
       const entries = await Promise.all(
@@ -465,6 +503,7 @@ async function fetchCategoryData(
                 $and: [
                   { date: { $gte: monthUtils.firstDayOfMonth(start) } },
                   { date: { $lte: monthUtils.lastDayOfMonth(end) } },
+                  ...transferExclusionFilters,
                 ],
               })
               .filter({ category: category.id })
@@ -677,8 +716,81 @@ function createBudgetGraph(
   return graph;
 }
 
-function createTransactionsGraph(categoryData: CategoryEntry[]): Graph {
+function createTransactionsGraph(
+  categoryData: CategoryEntry[],
+  synthesizeIncomeRoot: boolean = false,
+  topGroups: number = DEFAULT_CARD_GROUP_CAP,
+): Graph {
   const graph: Graph = new Map();
+
+  if (synthesizeIncomeRoot) {
+    // 2-tier "where did my money go" view: one Income source → top N
+    // CategoryGroups + Other. Income entries are intentionally dropped — the
+    // card visualises outflow, and the source-node height equals the sum of
+    // its outgoing links.
+    const groupTotals = new Map<string, { name: string; value: number }>();
+    for (const entry of categoryData) {
+      if (entry.isIncome) continue;
+      const prev = groupTotals.get(entry.categoryGroupId);
+      if (prev) {
+        prev.value += entry.value;
+      } else {
+        groupTotals.set(entry.categoryGroupId, {
+          name: entry.categoryGroup,
+          value: entry.value,
+        });
+      }
+    }
+
+    const sortedGroups = Array.from(groupTotals.entries()).sort(
+      ([, a], [, b]) => b.value - a.value,
+    );
+    let top = sortedGroups.slice(0, topGroups);
+    let rest = sortedGroups.slice(topGroups);
+    // One leftover renders better as its named band than as an "Other" bucket
+    // of size one (whose only tooltip entry is itself).
+    if (rest.length === 1) {
+      top = top.concat(rest);
+      rest = [];
+    }
+
+    addNodeWithLabel(graph, INCOME_ROOT_KEY, GraphLayers.Income, 'Income');
+
+    for (const [groupId, { name, value }] of top) {
+      addNode(graph, groupId, GraphLayers.CategoryGroup, name);
+      addValueToLink(graph, INCOME_ROOT_KEY, groupId, value);
+    }
+
+    if (rest.length > 0) {
+      const otherValue = rest.reduce((sum, [, v]) => sum + v.value, 0);
+      // Skip the Other bucket entirely if every leftover sums to zero —
+      // cleanUpNodes would prune the link, but the tooltipInfo on the root
+      // would still reference $0 entries that the user never sees.
+      if (otherValue > 0) {
+        addNodeWithLabel(
+          graph,
+          INCOME_ROOT_OTHER_KEY,
+          GraphLayers.CategoryGroup,
+          'Other',
+        );
+        addValueToLink(
+          graph,
+          INCOME_ROOT_KEY,
+          INCOME_ROOT_OTHER_KEY,
+          otherValue,
+        );
+        const rootNode = graph.get(INCOME_ROOT_KEY);
+        if (rootNode) {
+          rootNode.tooltipInfo = rest
+            .filter(([, v]) => v.value > 0)
+            .map(([, v]) => ({ name: v.name, value: v.value }))
+            .sort((a, b) => b.value - a.value);
+        }
+      }
+    }
+
+    return graph;
+  }
 
   categoryData.forEach(entry => {
     if (entry.isIncome) {
@@ -777,29 +889,55 @@ function groupOtherCategories(
   topN: number,
   categorySort: SortMode = 'per-group',
 ) {
-  // For each category group, find the top N categories by total value and group the rest into "Other"
+  // For each category group, find the top N categories by total value and
+  // group the rest into "Other". Also enforce a percentage floor: any
+  // category below MIN_LAYER_PERCENT of the largest in its layer is bucketed,
+  // even if we're already under topN. Prevents the 270:1 dynamic-range
+  // collapse where small flows render as zero-width strokes.
+  // Floor topN at 1 so a degenerate persisted value (0) does not collapse
+  // every category in O(N²).
+  const effectiveTopN = Math.max(1, topN);
   const deletedNodes = new Map<NodeKey, { key: NodeKey; data: NodeData }[]>();
+  // Keys bucketed because they sat below the percentage floor (vs the topN
+  // cap). promoteOtherBack restores singleton Others to keep small groups
+  // readable, but a floor-bucketed singleton MUST stay collapsed — otherwise
+  // it un-buckets and we're back to the zero-width-stroke problem this
+  // function was extended to solve.
+  const floorBucketed = new Set<NodeKey>();
 
-  let categoryNodes = nodesInLayer(graph, GraphLayers.Category).filter(
-    s => !s.endsWith(SpecialNodeKeys.OtherSuffix),
+  // Working set of "active" category keys — the source of truth for the loop.
+  // Each iteration either removes one key via moveToOther + graph.delete, or
+  // discards an orphan key directly (no graph mutation). Both shrink the set
+  // so the loop always makes forward progress and cannot spin.
+  const active = new Set<NodeKey>(
+    nodesInLayer(graph, GraphLayers.Category).filter(
+      s => !s.endsWith(SpecialNodeKeys.OtherSuffix),
+    ),
   );
-  while (categoryNodes.length > topN) {
-    const categoryNodeSet = new Set(categoryNodes);
+
+  while (active.size > 0) {
     const values = new Map<NodeKey, number>();
     graph.forEach(data => {
       data.to.forEach((v, k) => {
-        if (categoryNodeSet.has(k)) values.set(k, (values.get(k) ?? 0) + v);
+        if (active.has(k)) values.set(k, (values.get(k) ?? 0) + v);
       });
     });
     let categoryToDelete: NodeKey | undefined;
     let min = Infinity;
-    for (const k of categoryNodes) {
+    let maxValue = 0;
+    for (const k of active) {
       const val = values.get(k) ?? 0;
+      if (val > maxValue) maxValue = val;
       if (val < min) {
         min = val;
         categoryToDelete = k;
       }
     }
+
+    const threshold = maxValue * MIN_LAYER_PERCENT;
+    const overTopN = active.size > effectiveTopN;
+    const belowFloor = min < threshold;
+    if (!overTopN && !belowFloor) break;
 
     if (categoryToDelete === undefined) break; // safety
 
@@ -808,6 +946,7 @@ function groupOtherCategories(
       console.error(
         `Failed to find category group for category: ${categoryToDelete}`,
       );
+      active.delete(categoryToDelete);
       continue;
     }
 
@@ -817,6 +956,7 @@ function groupOtherCategories(
       console.error(
         `Failed to find node data for category: ${categoryToDelete}`,
       );
+      active.delete(categoryToDelete);
       continue;
     }
 
@@ -829,15 +969,20 @@ function groupOtherCategories(
       deletedCategoryGroup.push({ key: categoryToDelete, data: nodeData });
     }
 
+    if (belowFloor) {
+      floorBucketed.add(categoryToDelete);
+    }
     moveToOther(graph, categoryToDelete, categorySort === 'global');
     graph.delete(categoryToDelete);
-
-    categoryNodes = nodesInLayer(graph, GraphLayers.Category).filter(
-      s => !s.endsWith(SpecialNodeKeys.OtherSuffix),
-    );
+    active.delete(categoryToDelete);
   }
 
-  promoteOtherBack(graph, deletedNodes, categorySort === 'global');
+  promoteOtherBack(
+    graph,
+    deletedNodes,
+    categorySort === 'global',
+    floorBucketed,
+  );
 }
 
 function nodesInLayer(graph: Graph, layer: GraphLayers): NodeKey[] {
@@ -906,11 +1051,15 @@ function promoteOtherBack(
   graph: Graph,
   deletedNodes: Map<string, { key: string; data: NodeData }[]>,
   globalOther: boolean = false,
+  floorBucketed: Set<NodeKey> = new Set(),
 ) {
-  // If an Other node only contains one category, we revert it to an ordinary node
+  // If an Other node only contains one category, we revert it to an ordinary
+  // node — UNLESS that category was bucketed for falling below the visibility
+  // floor, in which case we must keep it collapsed or the zero-width-stroke
+  // problem returns.
   let otherGroupKey: NodeKey;
   deletedNodes.forEach((data, key) => {
-    if (data.length === 1) {
+    if (data.length === 1 && !floorBucketed.has(data[0].key)) {
       if (globalOther) {
         otherGroupKey = SpecialNodeKeys.GlobalOther;
       } else {
@@ -937,7 +1086,14 @@ function sortGraph(
     sortedEntries = Array.from(graph.entries()).sort(
       ([keyA], [keyB]) => getNodeValue(graph, keyB) - getNodeValue(graph, keyA),
     );
-    moveNodeToEnd(sortedEntries, SpecialNodeKeys.GlobalOther);
+    // Pin every "Other" bucket at the end of its layer instead of letting
+    // value-sort scatter it. Covers SpecialNodeKeys.GlobalOther and any
+    // synthesised root bucket (e.g. income_root__OTHER_BUCKET).
+    for (const [key] of sortedEntries.slice()) {
+      if (key.endsWith(SpecialNodeKeys.OtherSuffix)) {
+        moveNodeToEnd(sortedEntries, key);
+      }
+    }
   } else if (categorySort === 'per-group') {
     const categoryGroups = nodesInLayer(graph, GraphLayers.CategoryGroup);
     sortedEntries = Array.from(graph.entries()).sort(

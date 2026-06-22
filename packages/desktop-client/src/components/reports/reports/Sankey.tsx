@@ -193,6 +193,7 @@ function LayerSelector({
   const [isOpen, setIsOpen] = useState(false);
 
   const LAYER_LABELS: Record<GraphLayers, string> = {
+    [GraphLayers.Income]: t('Income'),
     [GraphLayers.IncomePayee]: t('Payee'),
     [GraphLayers.IncomeCategory]: t('Income category'),
     [GraphLayers.Account]: t('Account'),
@@ -201,15 +202,16 @@ function LayerSelector({
     [GraphLayers.Category]: t('Category'),
   };
 
-  // Filter available layers based on graph mode
-  const availableLayers: readonly GraphLayers[] =
-    graphMode === 'budgeted'
-      ? GRAPH_LAYER_ORDER.filter(
-          layer => layer !== GraphLayers.IncomePayee, // IncomePayee not available in budgeted
-        )
-      : GRAPH_LAYER_ORDER.filter(
-          layer => layer !== GraphLayers.Budget, // Budget not available in spent
-        );
+  // Filter available layers based on graph mode. Income is a synthetic
+  // card-only collapse — hide it from the drill-down selector so the
+  // exploration UI stays untouched.
+  const availableLayers: readonly GraphLayers[] = GRAPH_LAYER_ORDER.filter(
+    layer =>
+      layer !== GraphLayers.Income &&
+      (graphMode === 'budgeted'
+        ? layer !== GraphLayers.IncomePayee
+        : layer !== GraphLayers.Budget),
+  );
 
   const otherIndex =
     otherLayer !== undefined && availableLayers.includes(otherLayer)
@@ -295,15 +297,38 @@ function GraphModeSelector({ mode, onChange }: GraphModeSelectorProps) {
 type OptionsButtonProps = {
   showPercentages: boolean;
   onTogglePercentages: () => void;
+  includeTransfers: boolean;
+  onToggleIncludeTransfers: () => void;
+  // Include transfers only takes effect for the transaction-mode query;
+  // createBudgetSpreadsheet ignores the flag entirely. Hide the toggle in
+  // budgeted mode so the menu does not advertise a no-op.
+  showIncludeTransfers: boolean;
 };
 
 function OptionsButton({
   showPercentages,
   onTogglePercentages,
+  includeTransfers,
+  onToggleIncludeTransfers,
+  showIncludeTransfers,
 }: OptionsButtonProps) {
   const { t } = useTranslation();
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const items: Array<{ name: string; text: string; toggle: boolean }> = [
+    {
+      name: 'show-percentages',
+      text: t('Show as percentages'),
+      toggle: showPercentages,
+    },
+  ];
+  if (showIncludeTransfers) {
+    items.push({
+      name: 'include-transfers',
+      text: t('Include transfers'),
+      toggle: includeTransfers,
+    });
+  }
   return (
     <>
       <Button ref={triggerRef} onPress={() => setIsOpen(true)}>
@@ -318,14 +343,9 @@ function OptionsButton({
         <Menu
           onMenuSelect={item => {
             if (item === 'show-percentages') onTogglePercentages();
+            if (item === 'include-transfers') onToggleIncludeTransfers();
           }}
-          items={[
-            {
-              name: 'show-percentages',
-              text: t('Show as percentages'),
-              toggle: showPercentages,
-            },
-          ]}
+          items={items}
         />
       </Popover>
     </>
@@ -388,13 +408,28 @@ function SankeyInner({ widget }: SankeyInnerProps) {
     widget?.meta?.showPercentages ?? false,
   );
 
+  // Default off — Starting Balance and account-to-account transfers
+  // dominate by magnitude but are not real income/expense. Toggle restores
+  // them for the audit path.
+  const [includeTransfers, setIncludeTransfers] = useState(
+    widget?.meta?.includeTransfers ?? false,
+  );
+
   // Determine default layer based on mode
   const defaultLayerFrom = (mode: GraphMode) =>
     mode === 'budgeted' ? GraphLayers.IncomeCategory : GraphLayers.IncomePayee;
 
+  // Income is a synthetic card-only collapse; the drill-down hides it from
+  // LayerSelector, so if a persisted meta value were honored here the
+  // trigger button would render "Income" with no menu option to leave it.
+  const isDrilldownLayer = (value: unknown): value is GraphLayers =>
+    typeof value === 'string' &&
+    (Object.values(GraphLayers) as string[]).includes(value) &&
+    value !== GraphLayers.Income;
+
   const [layerFrom, setLayerFrom] = useState<GraphLayers>(() => {
-    const metaLayer = widget?.meta?.layerFrom as GraphLayers | undefined;
-    if (metaLayer) {
+    const metaLayer = widget?.meta?.layerFrom;
+    if (isDrilldownLayer(metaLayer)) {
       // Validate that the layer is valid for the current mode
       const mode = widget?.meta?.mode ?? 'spent';
       if (mode === 'budgeted' && metaLayer === GraphLayers.IncomePayee) {
@@ -409,8 +444,8 @@ function SankeyInner({ widget }: SankeyInnerProps) {
   });
 
   const [layerTo, setLayerTo] = useState<GraphLayers>(() => {
-    const metaLayer = widget?.meta?.layerTo as GraphLayers | undefined;
-    if (metaLayer) {
+    const metaLayer = widget?.meta?.layerTo;
+    if (isDrilldownLayer(metaLayer)) {
       // Validate that the layer is valid for the current mode
       const mode = widget?.meta?.mode ?? 'spent';
       if (mode === 'budgeted' && metaLayer === GraphLayers.IncomePayee) {
@@ -424,24 +459,43 @@ function SankeyInner({ widget }: SankeyInnerProps) {
     return GraphLayers.Category;
   });
 
-  // Reset invalid layer selections when switching modes
+  // Reset invalid layer selections when switching modes. Replace only the
+  // axis (or axes) the new mode rejects — keeping the user's still-valid
+  // selection on the other axis when possible. Falls back to the full
+  // default pair if the partial swap still violates from < to.
   useEffect(() => {
-    const availableLayers =
-      graphMode === 'budgeted'
-        ? (GRAPH_LAYER_ORDER.filter(
-            layer => layer !== GraphLayers.IncomePayee,
-          ) as GraphLayers[])
-        : (GRAPH_LAYER_ORDER.filter(
-            layer => layer !== GraphLayers.Budget,
-          ) as GraphLayers[]);
+    const availableLayers = GRAPH_LAYER_ORDER.filter(
+      layer =>
+        layer !== GraphLayers.Income &&
+        (graphMode === 'budgeted'
+          ? layer !== GraphLayers.IncomePayee
+          : layer !== GraphLayers.Budget),
+    ) as GraphLayers[];
 
     const fromIndex = availableLayers.indexOf(layerFrom);
     const toIndex = availableLayers.indexOf(layerTo);
+    const bothValid =
+      fromIndex !== -1 && toIndex !== -1 && fromIndex < toIndex;
+    if (bothValid) return;
 
-    if (fromIndex === -1 || toIndex === -1 || fromIndex >= toIndex) {
-      setLayerFrom(defaultLayerFrom(graphMode));
-      setLayerTo(GraphLayers.Category);
+    let nextFrom = fromIndex === -1 ? defaultLayerFrom(graphMode) : layerFrom;
+    let nextTo = toIndex === -1 ? GraphLayers.Category : layerTo;
+
+    // After the partial swap, the pair must still satisfy from < to; if not,
+    // give up on preservation and reset to the canonical defaults.
+    const nextFromIndex = availableLayers.indexOf(nextFrom);
+    const nextToIndex = availableLayers.indexOf(nextTo);
+    if (
+      nextFromIndex === -1 ||
+      nextToIndex === -1 ||
+      nextFromIndex >= nextToIndex
+    ) {
+      nextFrom = defaultLayerFrom(graphMode);
+      nextTo = GraphLayers.Category;
     }
+
+    if (nextFrom !== layerFrom) setLayerFrom(nextFrom);
+    if (nextTo !== layerTo) setLayerTo(nextTo);
   }, [graphMode, layerFrom, layerTo]);
 
   const { data: { grouped: groupedCategories = [] } = { grouped: [] } } =
@@ -463,6 +517,7 @@ function SankeyInner({ widget }: SankeyInnerProps) {
       categorySort,
       layerFrom,
       layerTo,
+      includeTransfers,
     );
   }, [
     datesInitialized,
@@ -476,6 +531,7 @@ function SankeyInner({ widget }: SankeyInnerProps) {
     categorySort,
     layerFrom,
     layerTo,
+    includeTransfers,
   ]);
 
   const defaultGetData = async (
@@ -570,6 +626,7 @@ function SankeyInner({ widget }: SankeyInnerProps) {
             topNcategories,
             categorySort,
             showPercentages,
+            includeTransfers,
             layerFrom,
             layerTo,
             timeFrame: {
@@ -750,6 +807,9 @@ function SankeyInner({ widget }: SankeyInnerProps) {
           <OptionsButton
             showPercentages={showPercentages}
             onTogglePercentages={() => setShowPercentages(v => !v)}
+            includeTransfers={includeTransfers}
+            onToggleIncludeTransfers={() => setIncludeTransfers(v => !v)}
+            showIncludeTransfers={graphMode === 'spent'}
           />
         </View>
         {widget && (

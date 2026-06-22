@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 
 import { theme } from '@actual-app/components/theme';
@@ -214,6 +214,13 @@ export function SankeyGraph({
   const [hoveredLinkIndex, setHoveredLinkIndex] = useState<number | null>(null);
   const gradientPrefix = useId();
 
+  // Clear the hover index when the underlying dataset changes — otherwise a
+  // stale index from the previous chart can index into the new (shorter)
+  // links array and surface the wrong tooltipInfo.
+  useEffect(() => {
+    setHoveredLinkIndex(null);
+  }, [data]);
+
   // Hoist gradient defs to a single block at the top of the Sankey instead of
   // emitting one <defs> per link. Each gradient blends from its source node
   // color to its target node color across the band's bounding box (left to
@@ -239,123 +246,141 @@ export function SankeyGraph({
 
   return (
     <Container style={style}>
-      {(width, height) => (
-        <ResponsiveContainer>
-          <Sankey
-            data={data}
-            node={props => (
-              <SankeyNode
-                {...props}
-                containerWidth={width}
-                showPercentages={showPercentages}
-              />
-            )}
-            link={props => (
-              <SankeyLink
-                {...props}
-                gradientPrefix={gradientPrefix}
-                isHovered={hoveredLinkIndex === props.index}
-                onMouseEnter={() => setHoveredLinkIndex(props.index)}
-                onMouseLeave={() => setHoveredLinkIndex(null)}
-              />
-            )}
-            sort={false}
-            iterations={1000}
-            nodePadding={23}
-            width={width}
-            height={height}
-            margin={{
-              left: 0,
-              right: 0,
-              top: 10,
-              bottom: 25,
-            }}
-          >
-            <defs>
-              {linkGradients.map(g => (
-                <linearGradient
-                  key={g.index}
-                  id={`${gradientPrefix}-${g.index}`}
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="0%"
-                >
-                  <stop offset="0%" stopColor={g.sourceColor} />
-                  <stop offset="100%" stopColor={g.targetColor} />
-                </linearGradient>
-              ))}
-            </defs>
-            {showTooltip && (
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (!active || !payload?.length) return null;
-                  const { value = 0, name = '' } = payload[0];
-                  const tooltipInfo =
-                    hoveredLinkIndex !== null
-                      ? (
-                          data.links[hoveredLinkIndex] as {
-                            tooltipInfo?: Array<{
-                              name: string;
-                              value: number;
-                            }>;
-                          }
-                        )?.tooltipInfo
-                      : undefined;
-                  return (
-                    <div
-                      className={css({
-                        zIndex: 1000,
-                        pointerEvents: 'none',
-                        borderRadius: 2,
-                        boxShadow: '0 1px 6px rgba(0, 0, 0, .20)',
-                        backgroundColor: theme.menuBackground,
-                        color: theme.menuItemText,
-                        padding: 10,
-                      })}
-                    >
-                      <div style={{ lineHeight: 1.4 }}>
-                        {name && <div style={{ marginBottom: 5 }}>{name}</div>}
-                        <div
-                          style={{
-                            fontFamily: privacyMode
-                              ? t('Redacted Script')
-                              : undefined,
-                          }}
-                        >
-                          {format(value, 'financial')}
-                        </div>
-                        {tooltipInfo && tooltipInfo.length > 0 && (
+      {(width, height) => {
+        // Adaptive padding: dense graphs (drill-down with 30+ nodes) need the
+        // minimum 20px to avoid bands collapsing; sparse graphs (overview
+        // card with ~7 nodes) get extra padding so each row is tall enough
+        // for the stacked name + amount label. Formula stops adding padding
+        // once nodes spread out.
+        const nodeCount = Math.max(1, data.nodes?.length ?? 1);
+        const adaptivePadding = Math.max(
+          20,
+          Math.floor(height / (nodeCount * 1.5)),
+        );
+        return (
+          <ResponsiveContainer>
+            <Sankey
+              data={data}
+              node={props => (
+                <SankeyNode
+                  {...props}
+                  containerWidth={width}
+                  showPercentages={showPercentages}
+                />
+              )}
+              link={props => (
+                <SankeyLink
+                  {...props}
+                  gradientPrefix={gradientPrefix}
+                  isHovered={hoveredLinkIndex === props.index}
+                  onMouseEnter={() => setHoveredLinkIndex(props.index)}
+                  onMouseLeave={() => setHoveredLinkIndex(null)}
+                />
+              )}
+              sort={false}
+              iterations={1000}
+              nodePadding={adaptivePadding}
+              width={width}
+              height={height}
+              margin={{
+                left: 0,
+                right: 0,
+                top: 10,
+                bottom: 25,
+              }}
+            >
+              <defs>
+                {linkGradients.map(g => (
+                  <linearGradient
+                    key={g.index}
+                    id={`${gradientPrefix}-${g.index}`}
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%"
+                  >
+                    <stop offset="0%" stopColor={g.sourceColor} />
+                    <stop offset="100%" stopColor={g.targetColor} />
+                  </linearGradient>
+                ))}
+              </defs>
+              {showTooltip && (
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const { value = 0, name = '' } = payload[0];
+                    const tooltipInfo =
+                      hoveredLinkIndex !== null
+                        ? (
+                            data.links[hoveredLinkIndex] as {
+                              tooltipInfo?: Array<{
+                                name: string;
+                                value: number;
+                              }>;
+                            }
+                          )?.tooltipInfo
+                        : undefined;
+                    return (
+                      <div
+                        className={css({
+                          zIndex: 1000,
+                          pointerEvents: 'none',
+                          borderRadius: 2,
+                          boxShadow: '0 1px 6px rgba(0, 0, 0, .20)',
+                          backgroundColor: theme.menuBackground,
+                          color: theme.menuItemText,
+                          padding: 10,
+                        })}
+                      >
+                        <div style={{ lineHeight: 1.4 }}>
+                          {name && (
+                            <div style={{ marginBottom: 5 }}>{name}</div>
+                          )}
                           <div
-                            style={{ marginTop: 6, fontSize: 11, opacity: 0.7 }}
+                            style={{
+                              fontFamily: privacyMode
+                                ? t('Redacted Script')
+                                : undefined,
+                            }}
                           >
-                            {tooltipInfo.map(item => (
-                              <div key={item.name}>
-                                {item.name} (
-                                <span
-                                  style={{
-                                    fontFamily: privacyMode
-                                      ? t('Redacted Script')
-                                      : undefined,
-                                  }}
-                                >
-                                  {format(item.value, 'financial')}
-                                </span>
-                                )
-                              </div>
-                            ))}
+                            {format(value, 'financial')}
                           </div>
-                        )}
+                          {tooltipInfo && tooltipInfo.length > 0 && (
+                            <div
+                              style={{
+                                marginTop: 6,
+                                fontSize: 11,
+                                opacity: 0.7,
+                              }}
+                            >
+                              {tooltipInfo.map(item => (
+                                <div key={item.name}>
+                                  {item.name} (
+                                  <span
+                                    style={{
+                                      fontFamily: privacyMode
+                                        ? t('Redacted Script')
+                                        : undefined,
+                                    }}
+                                  >
+                                    {format(item.value, 'financial')}
+                                  </span>
+                                  )
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                }}
-                isAnimationActive={false}
-              />
-            )}
-          </Sankey>
-        </ResponsiveContainer>
-      )}
+                    );
+                  }}
+                  isAnimationActive={false}
+                />
+              )}
+            </Sankey>
+          </ResponsiveContainer>
+        );
+      }}
     </Container>
   );
 }
